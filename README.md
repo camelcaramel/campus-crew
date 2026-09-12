@@ -1,8 +1,15 @@
 # Campus Crew
 
-TypeScript 풀스택 30차시 수업의 **6차시 checkpoint**입니다. 하나의 저장소에 Next.js 웹과 NestJS API를 두고, npm workspaces로 설치·실행합니다.
+TypeScript 풀스택 30차시 수업의 **7차시 checkpoint**입니다. 하나의 저장소에 Next.js 웹과 NestJS API를 두고, npm workspaces로 설치·실행합니다.
 
-5차시 개발 규칙과 API 응답을 유지하면서 홈과 모집글 경로, 공통 레이아웃, Link 이동을 추가했습니다. 이전 실습은 [4차시 checkpoint](docs/session-04-checkpoint.md)와 [5차시 checkpoint](docs/session-05-checkpoint.md), 이번 실습과 검증 결과는 [6차시 checkpoint](docs/session-06-checkpoint.md)를 참고하세요.
+기존 개발 규칙과 두 라우트를 유지하면서 Figma 기준의 Header와 Container를 추가했습니다. 이전 실습은 [4차시](docs/session-04-checkpoint.md), [5차시](docs/session-05-checkpoint.md), [6차시](docs/session-06-checkpoint.md), 이번 실습과 검증 결과는 [7차시 checkpoint](docs/session-07-checkpoint.md)를 참고하세요.
+
+## 7차시 목표
+
+- Figma의 Header와 Container를 같은 이름의 React 컴포넌트로 옮깁니다.
+- `components/layout/header.tsx`와 `container.tsx`를 `app/layout.tsx`에서 조립합니다.
+- Header 64px, 실제 content 최대 폭 1120px, 좌우 padding 32px을 설명합니다.
+- 비로그인 메뉴를 배치합니다. 모집글과 로고는 Link로 연결하고 로그인·회원가입은 인증 차시까지 비활성으로 둡니다.
 
 ## 6차시 목표
 
@@ -22,7 +29,7 @@ TypeScript 풀스택 30차시 수업의 **6차시 checkpoint**입니다. 하나�
 - 개발 서버 두 개를 실행하고 브라우저에서 응답을 확인합니다.
 - TypeScript, ESLint, Prettier, build의 역할을 설명합니다.
 
-현재 web은 홈과 모집글 안내 페이지, api는 시작 응답만 구현되어 있습니다. 로그인, 데이터베이스, 모집 CRUD, web에서 API 호출하기, Figma 화면 구현은 후속 차시에서 진행합니다.
+현재 web은 공통 Header/Container와 홈·모집글 안내 페이지, api는 시작 응답만 구현되어 있습니다. 로그인, 데이터베이스, 모집 CRUD, web에서 API 호출하기, 나머지 Figma 화면 구현은 후속 차시에서 진행합니다.
 
 ## 준비
 
@@ -53,7 +60,7 @@ npm ci
 npm run dev:web
 ```
 
-[http://localhost:3000](http://localhost:3000)에서 `Campus Crew` 홈 화면을 확인합니다. 공통 헤더의 모집글 링크로 [모집글 안내 페이지](http://localhost:3000/recruitments)에 이동하고 홈 링크로 돌아옵니다.
+[http://localhost:3000](http://localhost:3000)에서 `Campus Crew` 홈 화면을 확인합니다. 공통 헤더의 모집글 링크로 [모집글 안내 페이지](http://localhost:3000/recruitments)에 이동하고 Campus Crew 로고로 돌아옵니다.
 
 터미널 2 — api:
 
@@ -134,6 +141,9 @@ campus-crew/
 │   │   │   ├── page.tsx
 │   │   │   ├── globals.css
 │   │   │   └── recruitments/page.tsx
+│   │   ├── src/components/layout/
+│   │   │   ├── header.tsx
+│   │   │   └── container.tsx
 │   │   ├── package.json
 │   │   ├── tsconfig.json
 │   │   ├── next-env.d.ts
@@ -155,10 +165,12 @@ campus-crew/
 │   ├── session-04-checkpoint.md
 │   ├── session-05-checkpoint.md
 │   ├── session-06-checkpoint.md
+│   ├── session-07-checkpoint.md
 │   └── superpowers/plans/
 │       ├── 2026-09-11-campus-crew-session-04-bootstrap.md
 │       ├── 2026-09-12-campus-crew-session-05-dev-environment.md
-│       └── 2026-09-12-campus-crew-session-06-next-app-router.md
+│       ├── 2026-09-12-campus-crew-session-06-next-app-router.md
+│       └── 2026-09-12-campus-crew-session-07-layout-header.md
 ├── package.json
 ├── package-lock.json
 ├── .gitignore
@@ -184,18 +196,18 @@ campus-crew/
 
 ### web
 
-| 파일                            | 역할                                                                   |
-| ------------------------------- | ---------------------------------------------------------------------- |
-| `src/app/layout.tsx`            | 공통 헤더·Link Navigation·main/children, HTML 틀, metadata, CSS import |
-| `src/app/page.tsx`              | App Router의 `/` 주소에 표시할 페이지                                  |
-| `src/app/recruitments/page.tsx` | `/recruitments` 주소에 표시할 모집글 안내 페이지                       |
-| `src/app/globals.css`           | Tailwind CSS 로딩과 전역 스타일                                        |
-| `next.config.ts`                | Next.js 설정; 수업에 불필요한 AI 지침 파일 자동 생성 비활성화          |
-| `next-env.d.ts`                 | Next.js가 자동 생성하는 타입 참조; 직접 수정하거나 커밋하지 않음       |
-| `postcss.config.mjs`            | Tailwind CSS 4를 빌드에 연결                                           |
-| `tsconfig.json`                 | web TypeScript 검사 및 `@/*` → `src/*` 경로 별칭                       |
-| `eslint.config.mjs`             | Next.js/React/TypeScript용 ESLint flat config                          |
-| `package.json`                  | Next.js/React 의존성, Tailwind 도구, web 명령                          |
+| 파일                            | 역할                                                                 |
+| ------------------------------- | -------------------------------------------------------------------- |
+| `src/app/layout.tsx`            | Header/Container와 main/children 조립, HTML 틀, metadata, CSS import |
+| `src/app/page.tsx`              | App Router의 `/` 주소에 표시할 페이지                                |
+| `src/app/recruitments/page.tsx` | `/recruitments` 주소에 표시할 모집글 안내 페이지                     |
+| `src/app/globals.css`           | Tailwind CSS 로딩과 전역 스타일                                      |
+| `next.config.ts`                | Next.js 설정; 수업에 불필요한 AI 지침 파일 자동 생성 비활성화        |
+| `next-env.d.ts`                 | Next.js가 자동 생성하는 타입 참조; 직접 수정하거나 커밋하지 않음     |
+| `postcss.config.mjs`            | Tailwind CSS 4를 빌드에 연결                                         |
+| `tsconfig.json`                 | web TypeScript 검사 및 `@/*` → `src/*` 경로 별칭                     |
+| `eslint.config.mjs`             | Next.js/React/TypeScript용 ESLint flat config                        |
+| `package.json`                  | Next.js/React 의존성, Tailwind 도구, web 명령                        |
 
 Tailwind CSS 4는 `@import 'tailwindcss'`와 PostCSS 플러그인을 사용합니다. 기본 구성에서는 별도의 `tailwind.config.js`가 필요하지 않습니다. `next lint` 대신 ESLint 명령을 직접 사용합니다.
 
