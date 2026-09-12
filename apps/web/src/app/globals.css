@@ -1,0 +1,6 @@
+@import 'tailwindcss';
+
+body {
+  background: #f8fafc;
+  font-family: Arial, 'Malgun Gothic', sans-serif;
+}

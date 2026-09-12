@@ -1,0 +1,19 @@
+# Dependencies and generated output
+node_modules/
+.next/
+out/
+dist/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+
+# Local configuration (examples may be committed)
+.env*
+!.env.example
+
+# Logs and local editor / OS files
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
