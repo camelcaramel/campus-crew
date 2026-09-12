@@ -2,7 +2,7 @@
   "name": "campus-crew",
   "version": "0.1.0",
   "private": true,
-  "description": "Campus Crew 30차시 풀스택 수업 — 4차시 checkpoint",
+  "description": "Campus Crew 30차시 풀스택 수업 — 5차시 checkpoint",
   "workspaces": [
     "apps/*"
   ],
@@ -19,7 +19,8 @@
     "start:web": "npm run start --workspace=@campus-crew/web",
     "start:api": "npm run start --workspace=@campus-crew/api",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "check": "npm run format:check && npm run lint && npm run build"
   },
   "overrides": {
     "@nestjs/platform-express": {

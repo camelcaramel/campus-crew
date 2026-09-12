@@ -1,6 +1,14 @@
 # Campus Crew
 
-TypeScript 풀스택 30차시 수업의 **4차시 checkpoint**입니다. 하나의 저장소에 Next.js 웹과 NestJS API를 두고, npm workspaces로 설치·실행합니다.
+TypeScript 풀스택 30차시 수업의 **5차시 checkpoint**입니다. 하나의 저장소에 Next.js 웹과 NestJS API를 두고, npm workspaces로 설치·실행합니다.
+
+4차시 시작 화면과 API 응답을 유지하면서 개발 규칙, 환경 변수, 디렉터리 역할을 정리했습니다. 이전 실습은 [4차시 checkpoint](docs/session-04-checkpoint.md), 이번 실습과 검증 결과는 [5차시 checkpoint](docs/session-05-checkpoint.md)를 참고하세요.
+
+## 5차시 목표
+
+- ESLint로 코드 규칙을, Prettier로 포맷을 검사합니다.
+- 앱별 환경 파일과 공개 가능한 값·비밀 값을 구분합니다.
+- 파일을 어느 폴더에 둘지 설명하고, 루트 `npm run check`를 통과합니다.
 
 ## 4차시 목표
 
@@ -21,7 +29,7 @@ node --version
 npm --version
 ```
 
-전역 Next.js/Nest CLI 설치, Docker, 환경 변수 파일은 필요하지 않습니다. 패키지 최초 설치에는 인터넷 연결이 필요합니다.
+전역 Next.js/Nest CLI 설치와 Docker는 필요하지 않습니다. 환경 파일 없이도 시작 화면과 API 기본 포트 4000이 동작합니다. 5차시에서는 아래 예제를 복사해 설정 변경을 실습합니다. 패키지 최초 설치에는 인터넷 연결이 필요합니다.
 
 ## 설치와 실행
 
@@ -61,17 +69,18 @@ web은 API가 꺼져 있어도 동작합니다. 두 서버를 종료하려면 �
 
 모든 명령은 프로젝트 루트에서 실행합니다.
 
-| 명령                   | 역할                                         |
-| ---------------------- | -------------------------------------------- |
-| `npm ci`               | 잠금 파일 기준으로 두 앱과 공통 도구 설치    |
-| `npm run dev:web`      | web 개발 서버, 3000번 포트                   |
-| `npm run dev:api`      | api 개발 서버, 4000번 포트                   |
-| `npm run lint`         | 두 앱의 코드 규칙 검사; 파일은 수정하지 않음 |
-| `npm run build`        | 두 앱의 타입 검사와 실행용 결과물 생성       |
-| `npm run format:check` | 코드와 문서의 포맷 검사                      |
-| `npm run format`       | Prettier로 코드와 문서 포맷 수정             |
-| `npm run start:web`    | 빌드된 web 실행, 3000번 포트                 |
-| `npm run start:api`    | 빌드된 api 실행, 4000번 포트                 |
+| 명령                   | 역할                                                      |
+| ---------------------- | --------------------------------------------------------- |
+| `npm ci`               | 잠금 파일 기준으로 두 앱과 공통 도구 설치                 |
+| `npm run dev:web`      | web 개발 서버, 3000번 포트                                |
+| `npm run dev:api`      | api 개발 서버, PORT 환경 변수 또는 기본 4000              |
+| `npm run lint`         | 두 앱의 코드 규칙 검사; 파일은 수정하지 않음              |
+| `npm run build`        | 두 앱의 타입 검사와 실행용 결과물 생성                    |
+| `npm run format:check` | 코드와 문서의 포맷 검사                                   |
+| `npm run format`       | Prettier로 코드와 문서 포맷 수정                          |
+| `npm run check`        | format:check → lint → build를 순서대로 실행; 실패 시 중단 |
+| `npm run start:web`    | 빌드된 web 실행, 3000번 포트                              |
+| `npm run start:api`    | 빌드된 api 실행, PORT 환경 변수 또는 기본 4000            |
 
 앱 하나만 검사하거나 빌드할 수도 있습니다.
 
@@ -87,6 +96,28 @@ npm run build --workspace=@campus-crew/api
 `build`는 서버를 켜지 않습니다. 개발 서버를 종료한 후 `npm run build`를 실행하고, 두 터미널에서 각각 `start:web`, `start:api`를 실행하면 빌드 결과를 확인할 수 있습니다.
 
 ## 파일 구조와 역할
+
+5차시에 추가한 경로입니다. 아래 기존 4차시 파일 구성과 함께 사용합니다.
+
+```text
+apps/web/
+├── .env.example
+└── src/
+    ├── components/README.md  # 여러 기능의 공통 UI
+    ├── features/README.md    # 기능별 UI·타입·API 요청
+    └── lib/README.md         # 공통 기술 도구
+apps/api/
+├── .env.example
+└── src/
+    ├── common/README.md      # 여러 모듈의 공통 코드
+    ├── modules/README.md     # 기능별 Controller·Service·Module
+    └── prisma/README.md      # 향후 NestJS와 DB 연결
+docs/
+├── session-05-checkpoint.md
+└── superpowers/plans/2026-09-12-campus-crew-session-05-dev-environment.md
+```
+
+README는 해당 폴더의 역할과 앞으로 넣을 파일을 설명합니다. 실제 코드와 하위 폴더는 필요한 차시에 추가하며 `.gitkeep`이나 빈 Module을 만들지 않습니다.
 
 ```text
 campus-crew/
@@ -157,17 +188,17 @@ Tailwind CSS 4는 `@import 'tailwindcss'`와 PostCSS 플러그인을 사용합�
 
 ### api
 
-| 파일                    | 역할                                                  |
-| ----------------------- | ----------------------------------------------------- |
-| `src/main.ts`           | Nest 앱 생성과 4000번 포트 실행, 시작 실패 기록       |
-| `src/app.module.ts`     | 사용할 Controller와 Service 등록                      |
-| `src/app.controller.ts` | `GET /` 요청을 받고 Service 호출                      |
-| `src/app.service.ts`    | 응답 데이터 생성; 후속 차시에서 업무 로직을 배울 위치 |
-| `nest-cli.json`         | 소스 위치와 Nest CLI 빌드 설정                        |
-| `tsconfig.json`         | api TypeScript 및 Nest decorator 설정                 |
-| `tsconfig.build.json`   | 빌드에서 테스트 파일 제외                             |
-| `eslint.config.mjs`     | JavaScript/TypeScript용 ESLint flat config            |
-| `package.json`          | NestJS 런타임 의존성과 api 명령                       |
+| 파일                    | 역할                                                         |
+| ----------------------- | ------------------------------------------------------------ |
+| `src/main.ts`           | API 환경 파일 로딩, PORT 확인, Nest 앱 실행과 시작 실패 기록 |
+| `src/app.module.ts`     | 사용할 Controller와 Service 등록                             |
+| `src/app.controller.ts` | `GET /` 요청을 받고 Service 호출                             |
+| `src/app.service.ts`    | 응답 데이터 생성; 후속 차시에서 업무 로직을 배울 위치        |
+| `nest-cli.json`         | 소스 위치와 Nest CLI 빌드 설정                               |
+| `tsconfig.json`         | api TypeScript 및 Nest decorator 설정                        |
+| `tsconfig.build.json`   | 빌드에서 테스트 파일 제외                                    |
+| `eslint.config.mjs`     | JavaScript/TypeScript용 ESLint flat config                   |
+| `package.json`          | NestJS 런타임 의존성과 api 명령                              |
 
 요청 흐름은 `브라우저 → Controller → Service → JSON 응답`입니다. `Module`은 이 클래스들을 Nest에 등록하고, `main.ts`는 서버를 시작합니다.
 
@@ -177,13 +208,75 @@ Tailwind CSS 4는 `@import 'tailwindcss'`와 PostCSS 플러그인을 사용합�
 - CI를 배우는 차시에 루트 `.github/workflows/`를 생성합니다.
 - 데이터베이스·Docker를 배우는 차시에 루트 `docker-compose.yml`을 추가합니다.
 
-4차시에는 문서 외의 위 설정들을 생성하지 않습니다. 앱 구조를 바꾸지 않고 추가할 수 있습니다. Next.js 내부의 기본 번들러인 Turbopack과 별개로, monorepo 실행 도구인 Turborepo/Nx는 사용하지 않습니다.
+5차시에도 위 후속 설정들은 생성하지 않습니다. 앱 구조를 바꾸지 않고 추가할 수 있습니다. Next.js 내부의 기본 번들러인 Turbopack과 별개로, monorepo 실행 도구인 Turborepo/Nx는 사용하지 않습니다.
+
+## ESLint와 Prettier 규칙
+
+- ESLint: web은 기존 Next.js Core Web Vitals·TypeScript 규칙, api는 기존 JavaScript·TypeScript recommended 규칙을 사용합니다. 두 앱 모두 경고도 실패로 처리하며 lint는 파일을 수정하지 않습니다.
+- Prettier: 루트 `.prettierrc` 하나로 작은따옴표, 세미콜론, 공백 2칸, 후행 쉼표, LF 줄바꿈을 통일합니다. `.gitattributes`도 LF를 지정합니다.
+- `eslint-config-prettier`를 각 앱 규칙 뒤에 배치해 포맷 규칙의 충돌을 막습니다. Prettier를 ESLint 안에서 중복 실행하지 않습니다.
+- `.prettierignore`는 의존성·생성물·lockfile·환경 파일을 제외합니다. 비밀 파일의 Git 제외는 별도로 `.gitignore`가 담당합니다.
+
+작업 후 `npm run check`를 실행합니다. 포맷 검사만 실패하면 `npm run format` 후 다시 검사합니다. 자동 정리로 바뀐 내용도 `git diff`로 읽고 커밋합니다.
+
+## 환경 변수 실습
+
+환경 파일은 **앱 루트**에 둡니다. 저장소 루트나 `src/`에 통합 환경 파일을 만들지 않습니다.
+
+| 앱  | Git에 공유하는 예제     | 개인 실행 파일        | 예제 값                                          |
+| --- | ----------------------- | --------------------- | ------------------------------------------------ |
+| web | `apps/web/.env.example` | `apps/web/.env.local` | `NEXT_PUBLIC_API_BASE_URL=http://localhost:4000` |
+| api | `apps/api/.env.example` | `apps/api/.env`       | `PORT=4000`                                      |
+
+루트에서 다음을 실행합니다. 기존 개인 환경 파일이 있으면 복사하지 않고 직접 비교합니다.
+
+PowerShell:
+
+```powershell
+if (!(Test-Path apps/web/.env.local)) { Copy-Item apps/web/.env.example apps/web/.env.local }
+if (!(Test-Path apps/api/.env)) { Copy-Item apps/api/.env.example apps/api/.env }
+```
+
+macOS/Linux:
+
+```bash
+test -e apps/web/.env.local || cp apps/web/.env.example apps/web/.env.local
+test -e apps/api/.env || cp apps/api/.env.example apps/api/.env
+```
+
+### web
+
+Next.js가 `apps/web/.env.local`을 읽습니다. 앞으로 API 호출 코드를 작성할 때 `process.env.NEXT_PUBLIC_API_BASE_URL`로 접근합니다. 현재 페이지는 아직 API를 호출하지 않으므로 이 값만 바꿔도 화면의 동작은 달라지지 않습니다.
+
+`NEXT_PUBLIC_` 값은 브라우저 코드에 공개되고 빌드할 때 반영됩니다. 비밀번호·DB 접속 정보·비밀 키를 넣지 않습니다. 개발 중 환경 파일을 바꾸면 서버를 다시 시작하고, 배포용 공개 값을 바꾸면 다시 빌드합니다. 상세 동작은 [Next.js 환경 변수 문서](https://nextjs.org/docs/app/guides/environment-variables)를 참고하세요.
+
+### api
+
+`main.ts`가 앱 루트의 `.env`를 Node.js 내장 `loadEnvFile`로 읽습니다. 추가 패키지는 필요하지 않습니다. dev와 start 모두 같은 로딩 코드를 사용합니다.
+
+우선순위는 **이미 설정된 프로세스 환경 변수 → apps/api/.env → 기본값 4000**입니다. PORT는 1~65535 정수여야 하며 잘못된 값이면 서버를 시작하지 않습니다. 환경 파일이 없으면 기본값으로 실행합니다. `.env.local` 등 다른 파일은 API에서 자동으로 읽지 않습니다.
+
+`apps/api/.env`의 PORT를 사용하지 않는 포트(예: 4100)로 바꾸고 서버를 다시 시작한 뒤 해당 주소에서 응답을 확인합니다. 실습 후 4000으로 되돌립니다. API 포트를 바꾸면 향후 web API 주소도 맞춰야 합니다. 환경 파일 변경을 Nest watch가 자동 반영한다고 가정하지 말고 서버를 종료한 뒤 다시 실행하세요.
+
+기존 터미널의 PORT가 파일보다 우선합니다. 설정을 확인할 때는 해당 변수만 확인하며, 전체 환경 변수를 출력해 공유하지 않습니다. 내장 로더는 [Node.js 환경 변수 문서](https://nodejs.org/api/environment_variables.html)에 설명되어 있습니다.
+
+### Git에 공유할 것
+
+`.gitignore`의 `.env*` / `!.env.example` 규칙은 모든 깊이에 적용됩니다. 실제 환경 파일은 제외하고 예제만 커밋합니다. 예제에도 실제 비밀 값을 넣지 않습니다. 이미 Git이 추적하는 파일은 ignore만 추가해도 추적이 해제되지 않으므로 커밋 전 파일 목록을 확인합니다.
+
+```bash
+git check-ignore apps/web/.env.local apps/api/.env
+git status --short
+git diff
+```
+
+첫 명령은 개인 환경 파일 두 개를 출력해야 합니다. 커밋에 포함하는 환경 파일은 앱별 `.env.example` 두 개뿐입니다.
 
 ## 확인과 문제 해결
 
 [4차시 checkpoint](docs/session-04-checkpoint.md)의 실습 순서와 검증 기록을 확인하세요.
 
-- `EADDRINUSE` 또는 포트 충돌: 이전에 실행한 3000/4000 서버를 해당 터미널에서 종료한 뒤 다시 실행합니다. 고정 포트를 바꾸지 않습니다.
+- `EADDRINUSE` 또는 포트 충돌: 자신이 실행한 서버를 해당 터미널에서 종료한 뒤 다시 실행합니다. API는 필요하면 위 환경 변수 실습에 따라 PORT를 조정합니다. 다른 사람의 프로세스를 임의로 종료하지 않습니다.
 - `next`/`nest`를 찾을 수 없음: 프로젝트 루트에서 `npm ci`를 실행합니다. 전역 CLI 설치로 해결하지 않습니다.
 - `start`에서 빌드 결과를 찾지 못함: 개발 서버를 종료하고 먼저 `npm run build`를 실행합니다.
 - `npm --version` 자체가 실패함: 프로젝트 이전의 Node/npm 설치 문제입니다. 실행 경로를 확인하거나 Node.js를 복구합니다. 잠금 파일 삭제는 해결책이 아닙니다.
