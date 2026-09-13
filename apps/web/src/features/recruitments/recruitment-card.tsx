@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import type { Recruitment } from './types';
 
 type RecruitmentCardProps = {
@@ -23,7 +24,12 @@ export function RecruitmentCard({ recruitment }: RecruitmentCardProps) {
       </div>
 
       <h2 className="mt-4 text-xl font-semibold break-words text-neutral-900">
-        {recruitment.title}
+        <Link
+          href={`/recruitments/${recruitment.id}`}
+          className="hover:underline"
+        >
+          {recruitment.title}
+        </Link>
       </h2>
       <p className="mt-2 line-clamp-2 break-words text-neutral-500">
         {recruitment.content}
