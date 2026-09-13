@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import { loadEnvFile } from 'node:process';
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -19,6 +20,17 @@ async function bootstrap() {
   }
 
   const app = await NestFactory.create(AppModule);
+
+  const config = new DocumentBuilder()
+    .setTitle('Campus Crew API')
+    .setDescription(
+      '모집글을 조회하고 만들어 보며 GET과 POST 요청을 배우는 API입니다.',
+    )
+    .setVersion('1.0')
+    .build();
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('docs', app, document);
+
   await app.listen(port);
 }
 
