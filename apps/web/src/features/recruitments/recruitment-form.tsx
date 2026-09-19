@@ -1,37 +1,42 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
-import { createRecruitment } from './api';
 import { recruitmentFormSchema, type RecruitmentFormValues } from './schema';
 
-export function RecruitmentForm() {
-  const router = useRouter();
-  const queryClient = useQueryClient();
-  const mutation = useMutation({
-    mutationFn: createRecruitment,
-    onSuccess: async () => {
-      // 프론트 캐시를 오래된 상태로 표시합니다. DB를 수정하는 함수가 아닙니다.
-      await queryClient.invalidateQueries({ queryKey: ['recruitments'] });
-      router.push('/recruitments');
-    },
-  });
+type RecruitmentFormProps = {
+  mode: 'create' | 'edit';
+  defaultValues?: RecruitmentFormValues;
+  onSubmit: (values: RecruitmentFormValues) => void;
+  isPending: boolean;
+  errorMessage?: string;
+  cancelHref?: string;
+};
+
+export function RecruitmentForm({
+  mode,
+  defaultValues,
+  onSubmit,
+  isPending,
+  errorMessage,
+  cancelHref = '/recruitments',
+}: RecruitmentFormProps) {
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<RecruitmentFormValues>({
     resolver: zodResolver(recruitmentFormSchema),
-    defaultValues: { title: '', content: '' },
+    // edit 화면은 상세 데이터가 준비된 뒤 폼을 mount합니다.
+    // refetch마다 reset하지 않아 사용자가 입력 중인 값을 보존합니다.
+    defaultValues: defaultValues ?? { title: '', content: '' },
   });
 
-  function onSubmit(data: RecruitmentFormValues) {
+  function submit(data: RecruitmentFormValues) {
     // handleSubmit이 Zod 검증을 통과한 값만 전달합니다.
-    if (mutation.isPending) return;
-    mutation.mutate(data);
+    if (isPending) return;
+    onSubmit(data);
   }
 
   return (
@@ -39,7 +44,7 @@ export function RecruitmentForm() {
       {/* 브라우저 기본 검증 대신 Zod의 오류 메시지를 표시합니다. */}
       <form
         noValidate
-        onSubmit={handleSubmit(onSubmit)}
+        onSubmit={handleSubmit(submit)}
         className="mt-8 space-y-6"
       >
         <div>
@@ -126,25 +131,31 @@ export function RecruitmentForm() {
         </div>
 
         {/* 필드별 입력 오류와 서버 요청 실패를 구분합니다. */}
-        {mutation.isError && (
+        {errorMessage && (
           <p role="alert" className="text-sm text-red-600!">
-            {mutation.error.message}
+            {errorMessage}
           </p>
         )}
 
         <div className="flex justify-end gap-3">
           <Link
-            href="/recruitments"
+            href={cancelHref}
             className="inline-flex h-10 items-center justify-center rounded-lg border border-neutral-200 px-5 text-sm font-medium"
           >
             취소
           </Link>
           <button
             type="submit"
-            disabled={mutation.isPending}
+            disabled={isPending}
             className="h-10 cursor-pointer rounded-lg bg-primary-600 px-5 text-sm font-medium text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {mutation.isPending ? '등록 중...' : '등록'}
+            {isPending
+              ? mode === 'edit'
+                ? '수정 중...'
+                : '등록 중...'
+              : mode === 'edit'
+                ? '수정'
+                : '등록'}
           </button>
         </div>
       </form>

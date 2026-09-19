@@ -3,6 +3,7 @@ import type {
   CreateRecruitmentInput,
   CreateRecruitmentRequest,
   Recruitment,
+  UpdateRecruitmentRequest,
 } from './types';
 
 // seed 및 실제 DB에서 확인한 teacher ID입니다.
@@ -38,6 +39,35 @@ export async function createRecruitment(
 
 export function getRecruitments(): Promise<Recruitment[]> {
   return getJson<Recruitment[]>('/api/recruitments');
+}
+
+export async function updateRecruitment(
+  id: number,
+  input: UpdateRecruitmentRequest,
+): Promise<Recruitment> {
+  try {
+    const response = await fetch(`/api/recruitments/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    });
+    if (!response.ok) throw new Error('Update request failed');
+    return (await response.json()) as Recruitment;
+  } catch {
+    throw new Error('모집글을 수정하지 못했습니다.');
+  }
+}
+
+export async function deleteRecruitment(id: number): Promise<void> {
+  try {
+    const response = await fetch(`/api/recruitments/${id}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) throw new Error('Delete request failed');
+    // Nest는 204 No Content를 반환하므로 response.json()을 호출하지 않습니다.
+  } catch {
+    throw new Error('모집글을 삭제하지 못했습니다.');
+  }
 }
 
 export function getRecruitment(id: string): Promise<Recruitment> {

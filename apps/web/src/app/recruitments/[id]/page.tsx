@@ -1,15 +1,41 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { ErrorMessage } from '@/components/ui/error-message';
 import { Spinner } from '@/components/ui/spinner';
-import { getRecruitment } from '@/features/recruitments/api';
+import { deleteRecruitment } from '@/features/recruitments/api';
+import { useRecruitmentQuery } from '@/features/recruitments/queries';
 import { recruitmentCategoryLabels } from '@/features/recruitments/types';
 
 export default function RecruitmentDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const mutation = useMutation({
+    mutationFn: () => deleteRecruitment(Number(id)),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['recruitments'],
+        exact: true,
+      });
+      // 삭제 직후 활성 상세를 재조회하지 않습니다. 다시 방문하면 404를 확인합니다.
+      await queryClient.invalidateQueries({
+        queryKey: ['recruitments', id],
+        exact: true,
+        refetchType: 'none',
+      });
+      router.replace('/recruitments');
+    },
+  });
+
+  function handleDelete() {
+    if (mutation.isPending || !isConfirmingDelete) return;
+    mutation.mutate();
+  }
   const {
     data: recruitment,
     isPending,
@@ -17,10 +43,7 @@ export default function RecruitmentDetailPage() {
     error,
     refetch,
     isFetching,
-  } = useQuery({
-    queryKey: ['recruitments', id],
-    queryFn: () => getRecruitment(id),
-  });
+  } = useRecruitmentQuery(id);
 
   if (isPending || isError) {
     return (
@@ -102,6 +125,57 @@ export default function RecruitmentDetailPage() {
             {recruitment.content}
           </p>
         </div>
+        {/* 교육용 버튼입니다. confirm은 UX이며 서버 권한 검사는 23차시에 추가합니다. */}
+        <div className="mt-8 flex gap-3">
+          <button
+            type="button"
+            disabled={mutation.isPending}
+            onClick={() => router.push(`/recruitments/${id}/edit`)}
+            className="min-h-10 rounded-lg border border-neutral-200 px-5 text-sm disabled:opacity-50"
+          >
+            수정
+          </button>
+          <button
+            type="button"
+            disabled={mutation.isPending}
+            onClick={() => setIsConfirmingDelete(true)}
+            className="min-h-10 rounded-lg border border-red-200 px-5 text-sm text-red-600 disabled:opacity-50"
+          >
+            {mutation.isPending ? '삭제 중...' : '삭제'}
+          </button>
+        </div>
+        {isConfirmingDelete && (
+          <div
+            role="group"
+            aria-label="삭제 확인"
+            className="mt-4 rounded-lg border border-red-200 p-4"
+          >
+            <p>정말 삭제할까요?</p>
+            <div className="mt-3 flex gap-3">
+              <button
+                type="button"
+                disabled={mutation.isPending}
+                onClick={() => setIsConfirmingDelete(false)}
+                className="min-h-10 rounded-lg border border-neutral-200 px-4 text-sm disabled:opacity-50"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                disabled={mutation.isPending}
+                onClick={handleDelete}
+                className="min-h-10 rounded-lg bg-red-600 px-4 text-sm text-white disabled:opacity-50"
+              >
+                {mutation.isPending ? '삭제 중...' : '삭제 확인'}
+              </button>
+            </div>
+          </div>
+        )}
+        {mutation.isError && (
+          <p role="alert" className="mt-4 text-sm text-red-600!">
+            {mutation.error.message}
+          </p>
+        )}
       </article>
     </section>
   );

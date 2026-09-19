@@ -23,6 +23,9 @@ export type CreateRecruitmentRequest = CreateRecruitmentInput & {
   authorId: number;
 };
 
+// PATCH는 전달한 필드만 변경합니다. 작성자 변경은 이 폼의 범위가 아닙니다.
+export type UpdateRecruitmentRequest = Partial<CreateRecruitmentInput>;
+
 export const recruitmentCategoryLabels: Record<
   Recruitment['category'],
   string

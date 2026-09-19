@@ -1,4 +1,4 @@
-import { RecruitmentForm } from '@/features/recruitments/recruitment-form';
+import { CreateRecruitmentForm } from '@/features/recruitments/create-recruitment-form';
 
 export default function NewRecruitmentPage() {
   return (
@@ -6,7 +6,7 @@ export default function NewRecruitmentPage() {
       <h1>모집글 작성</h1>
       <p>함께할 팀원을 모집해보세요.</p>
 
-      <RecruitmentForm />
+      <CreateRecruitmentForm />
     </section>
   );
 }

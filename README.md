@@ -1,5 +1,14 @@
 # Campus Crew
 
+## 20차시: 모집글 수정·삭제 mutation
+
+공통 RecruitmentForm을 create/edit 화면에서 재사용하고, 실제 PATCH와 DELETE를 useMutation으로 연결합니다. 성공 후 목록·상세 캐시를 갱신하며 삭제 전 confirm과 pending/error UI를 제공합니다.
+
+- [20차시 구현·학습 포인트·검증](docs/session-20-edit-delete-mutations.md)
+- [20차시 구현 계획](docs/superpowers/plans/2026-09-19-campus-crew-session-20-edit-delete-mutations.md)
+- 실행: 기존 DB를 유지한 채 `npm run dev:api`, `npm run dev:web`; 모집글 상세의 수정/삭제 버튼에서 시작합니다.
+- 다음 21차시는 signup + password hash입니다. 실제 작성자 권한 검사는 23차시 backend authorization에서 구현합니다.
+
 ## 19차시: 모집글 작성 mutation
 
 기존 RHF + Zod 폼에서 실제 POST를 보내고, 성공하면 목록 캐시를 무효화한 뒤 목록으로 이동합니다. 요청 중 버튼을 비활성화하고 서버 오류는 폼 안에 표시합니다.
