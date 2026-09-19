@@ -1,23 +1,61 @@
+'use client';
+
+import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
-import { mockRecruitments } from '@/features/recruitments/mock-data';
+import { useParams } from 'next/navigation';
+import { ErrorMessage } from '@/components/ui/error-message';
+import { Spinner } from '@/components/ui/spinner';
+import { getRecruitment } from '@/features/recruitments/api';
+import { recruitmentCategoryLabels } from '@/features/recruitments/types';
 
-type RecruitmentDetailPageProps = {
-  params: Promise<{ id: string }>;
-};
+export default function RecruitmentDetailPage() {
+  const { id } = useParams<{ id: string }>();
+  const {
+    data: recruitment,
+    isPending,
+    isError,
+    error,
+    refetch,
+    isFetching,
+  } = useQuery({
+    queryKey: ['recruitments', id],
+    queryFn: () => getRecruitment(id),
+  });
 
-export default async function RecruitmentDetailPage({
-  params,
-}: RecruitmentDetailPageProps) {
-  // [id]에 해당하는 URL 값은 문자열이므로 Mock 데이터의 숫자 id와 맞춥니다.
-  const { id } = await params;
-  const recruitmentId = Number(id);
-  const recruitment = mockRecruitments.find(
-    (item) => item.id === recruitmentId,
-  );
-
-  if (!recruitment) {
-    notFound();
+  if (isPending || isError) {
+    return (
+      <section className="pt-4">
+        <Link
+          href="/recruitments"
+          className="text-sm text-primary-600 hover:underline"
+        >
+          모집글 목록으로
+        </Link>
+        <div className="mt-6">
+          {isPending ? (
+            <Spinner />
+          ) : (
+            <ErrorMessage
+              message={
+                error.message === '모집글을 찾을 수 없습니다.'
+                  ? error.message
+                  : '모집글을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'
+              }
+              action={
+                <button
+                  type="button"
+                  onClick={() => void refetch()}
+                  disabled={isFetching}
+                  className="min-h-10 rounded-lg border border-neutral-200 px-4 py-2 text-sm text-primary-600 disabled:opacity-50"
+                >
+                  다시 시도
+                </button>
+              }
+            />
+          )}
+        </div>
+      </section>
+    );
   }
 
   const isOpen = recruitment.status === 'OPEN';
@@ -35,7 +73,7 @@ export default async function RecruitmentDetailPage({
       <article className="mt-6 max-w-3xl rounded-xl border border-neutral-200 p-6 sm:p-8">
         <div className="flex flex-wrap gap-2 text-xs font-medium">
           <span className="rounded-full bg-gray-100 px-3 py-1 text-neutral-500">
-            {recruitment.category}
+            {recruitmentCategoryLabels[recruitment.category]}
           </span>
           <span
             className={`rounded-full px-3 py-1 ${
@@ -54,7 +92,9 @@ export default async function RecruitmentDetailPage({
 
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-neutral-500">
           <span>{recruitment.author.name}</span>
-          <time dateTime={recruitment.createdAt}>{recruitment.createdAt}</time>
+          <time dateTime={recruitment.createdAt}>
+            {recruitment.createdAt.slice(0, 10)}
+          </time>
         </div>
 
         <div className="mt-8 border-t border-neutral-200 pt-8">

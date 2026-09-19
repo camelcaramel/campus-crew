@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import type { Recruitment } from './types';
+import { recruitmentCategoryLabels, type Recruitment } from './types';
 
 type RecruitmentCardProps = {
   recruitment: Recruitment;
@@ -12,7 +12,7 @@ export function RecruitmentCard({ recruitment }: RecruitmentCardProps) {
     <article className="rounded-xl border border-neutral-200 p-6">
       <div className="flex flex-wrap gap-2 text-xs font-medium">
         <span className="rounded-full bg-gray-100 px-3 py-1 text-neutral-500">
-          {recruitment.category}
+          {recruitmentCategoryLabels[recruitment.category]}
         </span>
         <span
           className={`rounded-full px-3 py-1 ${
@@ -37,7 +37,9 @@ export function RecruitmentCard({ recruitment }: RecruitmentCardProps) {
 
       <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-sm text-neutral-500">
         <span>{recruitment.author.name}</span>
-        <time dateTime={recruitment.createdAt}>{recruitment.createdAt}</time>
+        <time dateTime={recruitment.createdAt}>
+          {recruitment.createdAt.slice(0, 10)}
+        </time>
       </div>
     </article>
   );

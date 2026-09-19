@@ -1,37 +1,41 @@
+'use client';
+
+import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorMessage } from '@/components/ui/error-message';
 import { Spinner } from '@/components/ui/spinner';
-import { mockRecruitments } from '@/features/recruitments/mock-data';
+import { getRecruitments } from '@/features/recruitments/api';
 import { RecruitmentCard } from '@/features/recruitments/recruitment-card';
 
-type RecruitmentsPageProps = {
-  searchParams: Promise<{ mode?: string | string[] }>;
-};
+export default function RecruitmentsPage() {
+  const {
+    data: recruitments,
+    isPending,
+    isError,
+    refetch,
+    isFetching,
+  } = useQuery({
+    queryKey: ['recruitments'],
+    queryFn: getRecruitments,
+  });
 
-export default async function RecruitmentsPage({
-  searchParams,
-}: RecruitmentsPageProps) {
-  // 수업용: ?mode=loading | empty | error | data. 기본값은 기존 Mock 목록입니다.
-  const { mode } = await searchParams;
-  const recruitments = mode === 'empty' ? [] : mockRecruitments;
-
-  // 이후 API 연결 시 mode 대신 isLoading, isError, data로 같은 분기를 선택합니다.
   let content;
 
-  if (mode === 'loading') {
+  if (isPending) {
     content = <Spinner />;
-  } else if (mode === 'error') {
+  } else if (isError) {
     content = (
       <ErrorMessage
-        message="요청을 처리하는 중 문제가 발생했습니다."
+        message="모집글을 불러오지 못했습니다. 잠시 후 다시 시도해주세요."
         action={
           <button
             type="button"
-            disabled
-            className="min-h-10 cursor-not-allowed rounded-lg border border-neutral-200 bg-gray-100 px-4 py-2 text-sm text-neutral-500"
+            onClick={() => void refetch()}
+            disabled={isFetching}
+            className="min-h-10 rounded-lg border border-neutral-200 px-4 py-2 text-sm text-primary-600 disabled:opacity-50"
           >
-            다시 시도 (준비 중)
+            다시 시도
           </button>
         }
       />

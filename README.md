@@ -1,5 +1,14 @@
 # Campus Crew
 
+## 18차시: TanStack Query로 모집글 조회 연결
+
+Next의 모집글 목록·상세가 same-origin `/api/*`를 통해 Nest와 PostgreSQL의 실제 데이터를 조회합니다. TanStack Query `5.103.1`을 사용하며, 기존 작성 폼은 아직 제출 결과를 콘솔로 확인하는 단계입니다.
+
+- [18차시 구조·실행·학습 포인트·검증](docs/session-18-frontend-query-integration.md)
+- [18차시 구현 계획](docs/superpowers/plans/2026-09-19-campus-crew-session-18-frontend-query-integration.md)
+- 실행: DB가 준비된 상태에서 별도 터미널로 `npm run dev:api`, `npm run dev:web`; [모집글 목록](http://localhost:3000/recruitments)
+- 검사: `npm run check`, `npm test --workspace=@campus-crew/web`, `npm run test:e2e --workspace=@campus-crew/api`
+
 ## 17차시: Prisma Recruitment CRUD
 
 현재 API는 PostgreSQL을 사용합니다. 실행 전에 루트 `.env`의 `DATABASE_URL`과 16차시 migration/seed가 필요합니다. `npm run dev:api`와 API build는 Prisma Client를 자동 생성합니다.
@@ -8,7 +17,7 @@
 - [17차시 Postman collection](docs/postman/campus-crew-session-17.postman_collection.json)
 - [17차시 구현 계획](docs/superpowers/plans/2026-09-19-campus-crew-session-17-recruitment-prisma-crud.md)
 
-아래의 과거 checkpoint 설명은 해당 차시의 기록입니다. 현재 API 시작에는 DB 연결이 필요하고, web은 아직 mock 데이터를 사용합니다.
+아래의 과거 checkpoint 설명은 해당 차시의 기록입니다. 현재 API 시작에는 DB 연결이 필요하고, 18차시 web 목록·상세는 실제 API를 사용합니다.
 
 ## 15차시: 로컬 DB 실행
 

@@ -1,7 +1,16 @@
-import type { Recruitment } from './types';
+// 8~11차시 비교용 fixture입니다. 실제 목록/상세 조회에서는 사용하지 않습니다.
+type MockRecruitment = {
+  id: number;
+  category: '스터디' | '프로젝트';
+  status: 'OPEN' | 'CLOSED';
+  title: string;
+  content: string;
+  author: { name: string };
+  createdAt: string;
+};
 
 // 서버 연결 전에 화면을 만들어 보는 연습용 데이터입니다.
-export const mockRecruitments: Recruitment[] = [
+export const mockRecruitments: MockRecruitment[] = [
   {
     id: 1,
     category: '스터디',
