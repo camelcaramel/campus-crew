@@ -1,0 +1,249 @@
+{
+  "info": {
+    "name": "Campus Crew 17차시 — Prisma Recruitment CRUD",
+    "description": "01–09 순서로 실행합니다. seed는 조회만 하고 새로 생성한 모집글만 수정/삭제합니다. 06 이후 API를 재시작하고 06을 다시 전송하면 영속성을 확인할 수 있습니다. 기본 baseUrl은 localhost:4000입니다.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000"
+    },
+    {
+      "key": "seedId",
+      "value": ""
+    },
+    {
+      "key": "authorId",
+      "value": ""
+    },
+    {
+      "key": "recruitmentId",
+      "value": ""
+    },
+    {
+      "key": "createdTitle",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "01 목록 — seedId와 authorId 저장",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/recruitments"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', function () { if (pm.response.code !== 200) throw new Error('Unexpected status: ' + pm.response.code); });",
+              "const rows = pm.response.json();",
+              "pm.test('seed 데이터와 author 기본 정보', function () { if (!rows.length || !rows[0].author?.id) throw new Error('먼저 db:seed를 실행하세요.'); if (Object.keys(rows[0].author).sort().join(',') !== 'id,name') throw new Error('Unexpected author fields'); });",
+              "if (rows.length) { pm.collectionVariables.set('seedId', rows[0].id); pm.collectionVariables.set('authorId', rows[0].author.id); }"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 seed 상세",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/recruitments/{{seedId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', function () { if (pm.response.code !== 200) throw new Error('Unexpected status: ' + pm.response.code); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 생성 — recruitmentId 저장",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/recruitments",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"{{createdTitle}}\",\n  \"content\": \"주 1회 함께 공부합니다.\",\n  \"category\": \"STUDY\",\n  \"authorId\": {{authorId}}\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.collectionVariables.set('createdTitle', '17차시 Postman 실습 ' + Date.now());"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 201', function () { if (pm.response.code !== 201) throw new Error('Unexpected status: ' + pm.response.code); });",
+              "const row = pm.response.json();",
+              "if (pm.response.code === 201) pm.collectionVariables.set('recruitmentId', row.id);",
+              "pm.test('작성자 및 기본 OPEN', function () { if (row.status !== 'OPEN' || row.authorId !== Number(pm.collectionVariables.get('authorId'))) throw new Error('Create mismatch'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 생성 후 목록",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/recruitments"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', function () { if (pm.response.code !== 200) throw new Error('Unexpected status: ' + pm.response.code); });",
+              "pm.test('생성한 항목이 목록에 있다', function () { if (!pm.response.json().some(row => row.id === Number(pm.collectionVariables.get('recruitmentId')))) throw new Error('Created row missing'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 수정 — 제목과 status",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/recruitments/{{recruitmentId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"{{createdTitle}} — 모집 마감\",\n  \"status\": \"CLOSED\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', function () { if (pm.response.code !== 200) throw new Error('Unexpected status: ' + pm.response.code); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 수정 후 상세 — 재시작 후에도 재전송",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/recruitments/{{recruitmentId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', function () { if (pm.response.code !== 200) throw new Error('Unexpected status: ' + pm.response.code); });",
+              "const row = pm.response.json();",
+              "pm.test('수정값과 생략한 내용 유지', function () { if (row.title !== pm.collectionVariables.get('createdTitle') + ' — 모집 마감' || row.status !== 'CLOSED' || row.content !== '주 1회 함께 공부합니다.' || row.category !== 'STUDY') throw new Error('Update mismatch'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 삭제 — 새 모집글만 삭제",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": "{{baseUrl}}/api/recruitments/{{recruitmentId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 204', function () { if (pm.response.code !== 204) throw new Error('Unexpected status: ' + pm.response.code); });",
+              "pm.test('204는 body 없음', function () { if (pm.response.text() !== '') throw new Error('Expected empty body'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "08 삭제 후 상세 — 404",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/recruitments/{{recruitmentId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 404', function () { if (pm.response.code !== 404) throw new Error('Unexpected status: ' + pm.response.code); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "09 seed 유지 확인",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/recruitments/{{seedId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', function () { if (pm.response.code !== 200) throw new Error('Unexpected status: ' + pm.response.code); });"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

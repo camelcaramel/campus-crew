@@ -3,9 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "prisma generate",
     "dev": "nest start --watch",
+    "prebuild": "prisma generate",
     "build": "nest build",
-    "start": "node dist/main.js",
+    "start": "node dist/src/main.js",
+    "test:e2e": "node --test test/recruitments.e2e.mjs",
     "lint": "eslint . --max-warnings 0",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",

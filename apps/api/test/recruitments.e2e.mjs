@@ -6,146 +6,340 @@ import process from 'node:process';
 import { after, before, test } from 'node:test';
 import { setTimeout } from 'node:timers/promises';
 import { fileURLToPath, URL } from 'node:url';
+import { config } from 'dotenv';
+import pg from 'pg';
 
-let server;
-let baseUrl;
-let serverOutput = '';
-const body = {
-  title: 'React 스터디 팀원 모집',
-  content: '주 1회 함께 공부할 팀원을 모집합니다.',
-  category: 'STUDY',
-};
+// Prisma DateTime uses UTC; pg otherwise interprets timestamp without timezone
+// using this Windows machine's local timezone when reading the comparison rows.
+pg.types.setTypeParser(1114, (value) => new Date(value + 'Z'));
 
-before(async () => {
-  const listener = createServer();
-  listener.listen(0, '127.0.0.1');
-  await once(listener, 'listening');
-  const port = listener.address().port;
-  await new Promise((resolve, reject) => {
-    listener.close((error) => (error ? reject(error) : resolve()));
+config({
+  path: fileURLToPath(new URL('../../../.env', import.meta.url)),
+  quiet: true,
+});
+const db = new pg.Client({ connectionString: process.env.DATABASE_URL });
+const prefix = 'session17-e2e-' + Date.now() + '-';
+const createdIds = new Set();
+let server, port, baseUrl, initialRows, author;
+
+async function snapshot() {
+  const result = {};
+  for (const table of ['users', 'recruitments', 'applications']) {
+    const fields =
+      table === 'users' ? 'id, email, name, "createdAt", "updatedAt"' : '*';
+    result[table] = (
+      await db.query('SELECT ' + fields + ' FROM ' + table + ' ORDER BY id')
+    ).rows;
+  }
+  return result;
+}
+
+async function startServer() {
+  let output = '';
+  const entry = new URL('../dist/src/main.js', import.meta.url);
+  server = spawn(process.execPath, [fileURLToPath(entry)], {
+    cwd: fileURLToPath(new URL('../../../', import.meta.url)),
+    env: { ...process.env, PORT: String(port) },
+    windowsHide: true,
+    stdio: ['ignore', 'pipe', 'pipe'],
   });
-  baseUrl = `http://127.0.0.1:${port}`;
-  server = spawn(
-    process.execPath,
-    [fileURLToPath(new URL('../dist/main.js', import.meta.url))],
-    {
-      env: { ...process.env, PORT: String(port) },
-      windowsHide: true,
-      stdio: ['ignore', 'pipe', 'pipe'],
-    },
-  );
   server.stdout.on('data', (chunk) => {
-    serverOutput += chunk;
+    output += chunk;
   });
   server.stderr.on('data', (chunk) => {
-    serverOutput += chunk;
+    output += chunk;
   });
-  for (let attempt = 0; attempt < 100; attempt++) {
+  for (let attempt = 0; attempt < 150; attempt++) {
     try {
-      const response = await globalThis.fetch(baseUrl);
-      if (response.ok) return;
+      if ((await globalThis.fetch(baseUrl)).ok) return;
     } catch {
-      // Wait only while our server starts listening.
+      /* Wait for this child process to listen. */
     }
     if (server.exitCode !== null) break;
     await setTimeout(100);
   }
-  throw new Error(`API did not start: ${serverOutput}`);
-});
+  throw new Error('API did not start: ' + output);
+}
 
-after(async () => {
+async function stopServer() {
   if (server && server.exitCode === null) {
     const exited = once(server, 'exit');
     server.kill();
     await exited;
   }
+}
+
+function request(method, path, body) {
+  return globalThis.fetch(baseUrl + path, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+  });
+}
+
+async function createRow(suffix, extra = {}) {
+  const response = await request('POST', '/api/recruitments', {
+    title: prefix + suffix,
+    content: '실제 DB CRUD 테스트용 모집글',
+    category: 'STUDY',
+    authorId: author.id,
+    ...extra,
+  });
+  const row = await response.json();
+  if (Number.isInteger(row.id)) createdIds.add(row.id);
+  assert.equal(response.status, 201);
+  return row;
+}
+
+before(async () => {
+  assert.ok(
+    process.env.DATABASE_URL,
+    'Set the local seeded DATABASE_URL first.',
+  );
+  await db.connect();
+  initialRows = await snapshot();
+  assert.ok(initialRows.recruitments.length > 0, 'Run db:seed first.');
+  author = initialRows.users.find(
+    ({ id }) => id === initialRows.recruitments[0].authorId,
+  );
+  assert.ok(author);
+  const listener = createServer();
+  listener.listen(0, '127.0.0.1');
+  await once(listener, 'listening');
+  port = listener.address().port;
+  await new Promise((resolve, reject) =>
+    listener.close((error) => (error ? reject(error) : resolve())),
+  );
+  baseUrl = 'http://127.0.0.1:' + port;
+  await startServer();
+});
+
+after(async () => {
+  try {
+    // Both the returned ids and this run's title prefix must match.
+    // An old array API returning a seed id cannot delete a real seed row.
+    await db.query(
+      'DELETE FROM recruitments WHERE id = ANY($1::int[]) AND title LIKE $2',
+      [[...createdIds], prefix + '%'],
+    );
+    if (initialRows)
+      assert.deepEqual(
+        await snapshot(),
+        initialRows,
+        'Existing DB rows must remain unchanged.',
+      );
+  } finally {
+    await stopServer();
+    await db.end();
+  }
 });
 
 test('기존 루트 상태 응답을 보존한다', async () => {
-  const response = await globalThis.fetch(baseUrl);
+  const response = await request('GET', '/');
   assert.equal(response.status, 200);
   assert.deepEqual(await response.json(), {
     message: 'Campus Crew API is running',
   });
 });
 
-test('목록과 상세에서 초기 모집글을 JSON으로 읽는다', async () => {
-  const response = await globalThis.fetch(`${baseUrl}/api/recruitments`);
+test('목록/상세가 실제 DB seed와 일치하고 author의 id/name만 노출한다', async () => {
+  const response = await request('GET', '/api/recruitments');
   assert.equal(response.status, 200);
-  assert.match(response.headers.get('content-type'), /application\/json/);
   const items = await response.json();
-  assert.equal(items.length, 3);
-  assert.deepEqual(
-    items.map(({ id }) => id),
-    [1, 2, 3],
-  );
-  const detail = await globalThis.fetch(`${baseUrl}/api/recruitments/1`);
+  const expected = initialRows.recruitments.map((row) => ({
+    ...row,
+    author: {
+      id: row.authorId,
+      name: initialRows.users.find(({ id }) => id === row.authorId).name,
+    },
+  }));
+  assert.deepEqual(items, JSON.parse(JSON.stringify(expected)));
+  const detail = await request('GET', '/api/recruitments/' + items[0].id);
   assert.equal(detail.status, 200);
   assert.deepEqual(await detail.json(), items[0]);
 });
 
-test('존재하지 않는 id의 상세 조회는 404다', async () => {
-  const response = await globalThis.fetch(`${baseUrl}/api/recruitments/999999`);
-  assert.equal(response.status, 404);
-  const error = await response.json();
-  assert.equal(error.statusCode, 404);
-  assert.equal(error.message, '모집글을 찾을 수 없습니다.');
-});
-
-test('POST는 201과 생성 객체를 반환하고 이후 GET에서 조회된다', async () => {
-  const response = await globalThis.fetch(`${baseUrl}/api/recruitments`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+test('POST는 201/OPEN으로 DB에 저장하고 입력 id/status/relation 객체는 무시한다', async () => {
+  const row = await createRow('create', {
+    id: -1,
+    status: 'CLOSED',
+    author: { create: { name: 'must-not-create' } },
   });
-  assert.equal(response.status, 201);
-  const created = await response.json();
-  assert.deepEqual(created, { id: 4, ...body, status: 'OPEN' });
-
-  const detail = await globalThis.fetch(`${baseUrl}/api/recruitments/4`);
-  assert.equal(detail.status, 200);
-  assert.deepEqual(await detail.json(), created);
-  const list = await globalThis.fetch(`${baseUrl}/api/recruitments`);
-  assert.equal(list.status, 200);
-  const items = await list.json();
-  assert.equal(items.length, 4);
+  assert.ok(row.id > 0);
+  assert.equal(row.status, 'OPEN');
+  assert.equal(row.authorId, author.id);
+  assert.deepEqual(row.author, { id: author.id, name: author.name });
+  const persisted = (
+    await db.query('SELECT * FROM recruitments WHERE id = $1', [row.id])
+  ).rows[0];
+  assert.equal(persisted.title, prefix + 'create');
+  const items = await (await request('GET', '/api/recruitments')).json();
   assert.deepEqual(
-    items.find(({ id }) => id === 4),
-    created,
+    items.find(({ id }) => id === row.id),
+    row,
   );
 });
 
-test('연속 생성 id는 증가하고 입력 id와 status는 서버 값을 덮어쓰지 못한다', async () => {
-  const response = await globalThis.fetch(`${baseUrl}/api/recruitments`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ...body, id: 1, status: 'CLOSED' }),
+test('PATCH는 허용 필드만 수정하며 생략한 내용과 작성자를 유지한다', async () => {
+  const row = await createRow('patch');
+  const response = await request('PATCH', '/api/recruitments/' + row.id, {
+    title: prefix + 'patched',
+    status: 'CLOSED',
+    id: -1,
+    authorId: -1,
+    author: { update: { name: 'must-not-change' } },
   });
-  assert.equal(response.status, 201);
-  assert.deepEqual(await response.json(), { id: 5, ...body, status: 'OPEN' });
+  assert.equal(response.status, 200);
+  const updated = await response.json();
+  assert.equal(updated.title, prefix + 'patched');
+  assert.equal(updated.status, 'CLOSED');
+  assert.equal(updated.content, row.content);
+  assert.equal(updated.category, 'STUDY');
+  assert.equal(updated.authorId, author.id);
+  assert.deepEqual(updated.author, row.author);
+  const second = await request('PATCH', '/api/recruitments/' + row.id, {
+    content: '내용 수정',
+    category: 'PROJECT',
+  });
+  assert.equal(second.status, 200);
+  const data = await (
+    await request('GET', '/api/recruitments/' + row.id)
+  ).json();
+  assert.equal(data.content, '내용 수정');
+  assert.equal(data.category, 'PROJECT');
+  assert.equal(data.status, 'CLOSED');
+  const unchanged = await request('PATCH', '/api/recruitments/' + row.id, {});
+  assert.equal(unchanged.status, 200);
+  assert.equal((await unchanged.json()).title, prefix + 'patched');
 });
 
-test('Swagger UI와 명세에서 GET/POST 및 POST body를 확인할 수 있다', async () => {
-  const ui = await globalThis.fetch(`${baseUrl}/docs`);
+test('없는 모집글의 GET/PATCH/DELETE는 404다', async () => {
+  for (const method of ['GET', 'PATCH', 'DELETE']) {
+    const response = await request(
+      method,
+      '/api/recruitments/-1',
+      method === 'PATCH' ? { title: '없는 글' } : undefined,
+    );
+    assert.equal(response.status, 404);
+    assert.equal((await response.json()).statusCode, 404);
+  }
+});
+
+test('숫자가 아닌 경로 id는 400이다', async () => {
+  for (const method of ['GET', 'PATCH', 'DELETE']) {
+    const response = await request(
+      method,
+      '/api/recruitments/not-a-number',
+      method === 'PATCH' ? {} : undefined,
+    );
+    assert.equal(response.status, 400);
+  }
+});
+
+test('없는 authorId 또는 잘못된 authorId는 400이며 DB에 삽입하지 않는다', async () => {
+  for (const authorId of [-1, 2147483647, '1', null, 1.5]) {
+    const response = await request('POST', '/api/recruitments', {
+      title: prefix + 'bad-author',
+      content: '내용',
+      category: 'STUDY',
+      authorId,
+    });
+    const row = await response.json();
+    if (Number.isInteger(row.id)) createdIds.add(row.id);
+    assert.equal(response.status, 400);
+  }
+  assert.equal(
+    (
+      await db.query(
+        'SELECT count(*)::int AS count FROM recruitments WHERE title = $1',
+        [prefix + 'bad-author'],
+      )
+    ).rows[0].count,
+    0,
+  );
+});
+
+test('DB 정수 범위를 벗어나는 경로 id는 500 대신 400이다', async () => {
+  for (const id of ['2147483648', '-2147483649', '9007199254740993']) {
+    for (const method of ['GET', 'PATCH', 'DELETE']) {
+      const response = await request(
+        method,
+        '/api/recruitments/' + id,
+        method === 'PATCH' ? {} : undefined,
+      );
+      assert.equal(response.status, 400);
+    }
+  }
+});
+
+test('생성/수정한 데이터와 seed가 API 재시작 후에도 유지된다', async () => {
+  const row = await createRow('persistence');
+  const patch = await request('PATCH', '/api/recruitments/' + row.id, {
+    status: 'CLOSED',
+  });
+  assert.equal(patch.status, 200);
+  const expected = await patch.json();
+  await stopServer();
+  await startServer();
+  const detail = await request('GET', '/api/recruitments/' + row.id);
+  assert.equal(detail.status, 200);
+  assert.deepEqual(await detail.json(), expected);
+  const seed = await request(
+    'GET',
+    '/api/recruitments/' + initialRows.recruitments[0].id,
+  );
+  assert.equal(seed.status, 200);
+  assert.equal((await seed.json()).title, initialRows.recruitments[0].title);
+});
+
+test('DELETE는 빈 204 응답이고 이후 GET/PATCH/DELETE는 404다', async () => {
+  const row = await createRow('delete');
+  const response = await request('DELETE', '/api/recruitments/' + row.id);
+  assert.equal(response.status, 204);
+  assert.equal(await response.text(), '');
+  assert.equal(
+    (await db.query('SELECT id FROM recruitments WHERE id = $1', [row.id]))
+      .rowCount,
+    0,
+  );
+  for (const method of ['GET', 'PATCH', 'DELETE']) {
+    assert.equal(
+      (
+        await request(
+          method,
+          '/api/recruitments/' + row.id,
+          method === 'PATCH' ? {} : undefined,
+        )
+      ).status,
+      404,
+    );
+  }
+});
+
+test('Swagger /docs 및 명세에 CRUD와 최소 DTO가 노출된다', async () => {
+  const ui = await request('GET', '/docs');
   assert.equal(ui.status, 200);
   assert.match(await ui.text(), /swagger-ui/);
-  const response = await globalThis.fetch(`${baseUrl}/docs-json`);
-  assert.equal(response.status, 200);
-  const document = await response.json();
-  assert.equal(document.info.title, 'Campus Crew API');
-  assert.equal(document.info.version, '1.0');
+  const document = await (await request('GET', '/docs-json')).json();
   assert.ok(document.paths['/api/recruitments'].get);
-  assert.ok(document.paths['/api/recruitments/{id}'].get);
-  const post = document.paths['/api/recruitments'].post;
-  assert.ok(post.responses['201']);
-  const schemaRef = post.requestBody.content['application/json'].schema.$ref;
-  const schema = document.components.schemas[schemaRef.split('/').at(-1)];
-  assert.deepEqual(schema.required, ['title', 'content', 'category']);
-  assert.equal(schema.properties.title.example, body.title);
-  assert.equal(schema.properties.content.example, body.content);
-  assert.deepEqual(schema.properties.category.enum, [
-    'STUDY',
-    'PROJECT',
-    'CONTEST',
+  assert.ok(document.paths['/api/recruitments'].post.responses['201']);
+  const detail = document.paths['/api/recruitments/{id}'];
+  assert.ok(detail.get);
+  assert.ok(detail.patch);
+  assert.ok(detail.delete.responses['204']);
+  const create = document.components.schemas.CreateRecruitmentDto;
+  assert.deepEqual(create.required, [
+    'title',
+    'content',
+    'category',
+    'authorId',
+  ]);
+  const update = document.components.schemas.UpdateRecruitmentDto;
+  assert.equal(update.required?.length ?? 0, 0);
+  assert.deepEqual(Object.keys(update.properties).sort(), [
+    'category',
+    'content',
+    'status',
+    'title',
   ]);
 });

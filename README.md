@@ -1,5 +1,15 @@
 # Campus Crew
 
+## 17차시: Prisma Recruitment CRUD
+
+현재 API는 PostgreSQL을 사용합니다. 실행 전에 루트 `.env`의 `DATABASE_URL`과 16차시 migration/seed가 필요합니다. `npm run dev:api`와 API build는 Prisma Client를 자동 생성합니다.
+
+- [17차시 실행·CRUD·영속성 확인](docs/session-17-prisma-crud.md)
+- [17차시 Postman collection](docs/postman/campus-crew-session-17.postman_collection.json)
+- [17차시 구현 계획](docs/superpowers/plans/2026-09-19-campus-crew-session-17-recruitment-prisma-crud.md)
+
+아래의 과거 checkpoint 설명은 해당 차시의 기록입니다. 현재 API 시작에는 DB 연결이 필요하고, web은 아직 mock 데이터를 사용합니다.
+
 ## 15차시: 로컬 DB 실행
 
 Docker를 실행하고 루트 `.env.example`을 `.env`로 최초 한 번 복사한 뒤 실행합니다. 기존 `.env`는 덮어쓰지 않습니다.

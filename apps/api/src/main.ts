@@ -8,10 +8,16 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  // src와 dist 모두 한 단계 위가 API 앱 루트입니다.
-  const envPath = resolve(__dirname, '../.env');
-  if (existsSync(envPath)) {
-    loadEnvFile(envPath);
+  // src/main.ts와 dist/src/main.js에서 모두 같은 API/저장소 .env를 찾습니다.
+  const apiRoot = existsSync(resolve(__dirname, '../package.json'))
+    ? resolve(__dirname, '..')
+    : resolve(__dirname, '../..');
+  // 프로세스 환경 변수 > apps/api/.env > 저장소 루트 .env 순으로 우선합니다.
+  for (const envPath of [
+    resolve(apiRoot, '.env'),
+    resolve(apiRoot, '../../.env'),
+  ]) {
+    if (existsSync(envPath)) loadEnvFile(envPath);
   }
 
   const port = Number(process.env.PORT ?? 4000);
@@ -24,7 +30,7 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('Campus Crew API')
     .setDescription(
-      '모집글을 조회하고 만들어 보며 GET과 POST 요청을 배우는 API입니다.',
+      'Prisma와 PostgreSQL로 모집글 GET/POST/PATCH/DELETE를 실습하는 API입니다.',
     )
     .setVersion('1.0')
     .build();
