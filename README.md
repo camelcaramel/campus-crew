@@ -311,6 +311,8 @@ git diff
 
 ## 확인과 문제 해결
 
+16차시 DB 실습은 [Prisma schema · Migration · Seed](docs/session-16-prisma.md)를 참고하세요. `apps/api`에서 `npx prisma validate`, `npx prisma format`, `npx prisma migrate dev --name init`, `npx prisma generate`, `npx prisma db seed` 순으로 실행합니다. Prisma는 7.10.0으로 고정하며, 기존 NestJS API는 아직 in-memory입니다.
+
 [4차시 checkpoint](docs/session-04-checkpoint.md)의 실습 순서와 검증 기록을 확인하세요.
 
 - `EADDRINUSE` 또는 포트 충돌: 자신이 실행한 서버를 해당 터미널에서 종료한 뒤 다시 실행합니다. API는 필요하면 위 환경 변수 실습에 따라 PORT를 조정합니다. 다른 사람의 프로세스를 임의로 종료하지 않습니다.

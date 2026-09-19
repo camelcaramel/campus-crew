@@ -6,6 +6,7 @@ dist/
 coverage/
 *.tsbuildinfo
 next-env.d.ts
+apps/api/generated/
 
 # Local configuration (examples may be committed)
 .env*

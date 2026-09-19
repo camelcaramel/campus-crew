@@ -1,0 +1,69 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum RecruitmentCategory {
+  STUDY
+  PROJECT
+  CONTEST
+}
+
+enum RecruitmentStatus {
+  OPEN
+  CLOSED
+}
+
+enum ApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id           Int           @id @default(autoincrement())
+  email        String        @unique
+  name         String
+  passwordHash String
+  recruitments Recruitment[]
+  applications Application[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@map("users")
+}
+
+model Recruitment {
+  id           Int                 @id @default(autoincrement())
+  title        String
+  content      String
+  category     RecruitmentCategory
+  status       RecruitmentStatus   @default(OPEN)
+  authorId     Int
+  author       User                @relation(fields: [authorId], references: [id])
+  applications Application[]
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  @@map("recruitments")
+}
+
+model Application {
+  id            Int               @id @default(autoincrement())
+  message       String
+  status        ApplicationStatus @default(PENDING)
+  applicantId   Int
+  recruitmentId Int
+  applicant     User              @relation(fields: [applicantId], references: [id])
+  recruitment   Recruitment       @relation(fields: [recruitmentId], references: [id], onDelete: Cascade)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@unique([applicantId, recruitmentId])
+  @@map("applications")
+}
