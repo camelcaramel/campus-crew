@@ -2,8 +2,9 @@ import 'reflect-metadata';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { loadEnvFile } from 'node:process';
-import { Logger } from '@nestjs/common';
+import { BadRequestException, Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
@@ -25,12 +26,36 @@ async function bootstrap() {
     throw new Error('PORT must be an integer between 1 and 65535');
   }
 
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    bodyParser: false,
+  });
+  app.useBodyParser('json');
+  app.useBodyParser('urlencoded', { extended: true });
+  // JSON 파싱 오류의 원문에는 password가 포함될 수 있어 Nest 전달 전에 제거합니다.
+  app.use(
+    (
+      error: unknown,
+      _request: unknown,
+      _response: unknown,
+      next: (error: unknown) => void,
+    ) => {
+      if (
+        error instanceof SyntaxError &&
+        'type' in error &&
+        error.type === 'entity.parse.failed'
+      ) {
+        next(new BadRequestException('올바른 JSON 요청 본문을 입력하세요.'));
+        return;
+      }
+      next(error);
+    },
+  );
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
 
   const config = new DocumentBuilder()
     .setTitle('Campus Crew API')
     .setDescription(
-      'Prisma와 PostgreSQL로 모집글 GET/POST/PATCH/DELETE를 실습하는 API입니다.',
+      'Prisma와 PostgreSQL 기반 모집글 CRUD 및 회원가입·비밀번호 hash 실습 API입니다.',
     )
     .setVersion('1.0')
     .build();

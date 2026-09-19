@@ -1,17 +1,22 @@
+import { Allow } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
-// 요청 body의 모양과 Swagger 설명입니다. 런타임 입력 검증은 아직 하지 않습니다.
+// 전역 whitelist에서 기존 필드를 보존합니다. 값 검증은 기존 Service 동작을 유지합니다.
 export class CreateRecruitmentDto {
+  @Allow()
   @ApiProperty({ example: 'React 스터디 팀원 모집' })
   title!: string;
 
+  @Allow()
   @ApiProperty({ example: '주 1회 함께 공부할 팀원을 모집합니다.' })
   content!: string;
 
+  @Allow()
   @ApiProperty({ enum: ['STUDY', 'PROJECT', 'CONTEST'], example: 'STUDY' })
   category!: 'STUDY' | 'PROJECT' | 'CONTEST';
 
   // auth 차시에서는 body 대신 현재 로그인 사용자 id를 사용합니다.
+  @Allow()
   @ApiProperty({ example: 1 })
   authorId!: number;
 }

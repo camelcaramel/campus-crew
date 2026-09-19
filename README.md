@@ -375,3 +375,11 @@ npm --version
 - [Next.js App Router 설치](https://nextjs.org/docs/app/getting-started/installation)
 - [Tailwind CSS의 Next.js 설정](https://tailwindcss.com/docs/installation/framework-guides/nextjs)
 - [NestJS 첫 단계](https://docs.nestjs.com/first-steps) — 공식 문서의 최신 버전과 이 checkpoint의 NestJS 11은 다를 수 있으므로 수업에서는 잠금 버전을 사용합니다.
+
+## 21차시 — 회원가입과 비밀번호 hash
+
+`POST /api/auth/signup`은 DTO 입력 검증 후 bcryptjs cost 10으로 비밀번호를 hash하고 User를 생성합니다. 응답에는 id/email/name/createdAt만 포함하며 중복 이메일은 409입니다.
+
+- [21차시 수업 노트와 실제 검증 기록](docs/session-21-signup.md)
+- [21차시 Postman 컬렉션](docs/postman/session-21-signup.postman_collection.json)
+- 로그인과 JWT는 다음 22차시에서 구현합니다.
