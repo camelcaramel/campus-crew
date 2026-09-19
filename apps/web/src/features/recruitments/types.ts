@@ -13,6 +13,16 @@ export type Recruitment = {
   updatedAt: string;
 };
 
+// 폼 입력에는 작성자가 없고, 서버 요청에는 authorId가 추가됩니다.
+export type CreateRecruitmentInput = Pick<
+  Recruitment,
+  'title' | 'category' | 'content'
+>;
+
+export type CreateRecruitmentRequest = CreateRecruitmentInput & {
+  authorId: number;
+};
+
 export const recruitmentCategoryLabels: Record<
   Recruitment['category'],
   string

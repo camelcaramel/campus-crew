@@ -1,0 +1,119 @@
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import { createServer } from 'node:http';
+import { after, before, test } from 'node:test';
+import ts from 'typescript';
+
+let createRecruitment, server, baseUrl;
+const realFetch = globalThis.fetch;
+const input = {
+  title: 'React 스터디',
+  category: 'STUDY',
+  content: '매주 함께 React를 공부할 팀원을 모집합니다.',
+};
+const result = {
+  ...input,
+  id: 42,
+  authorId: 1,
+  author: { id: 1, name: 'teacher' },
+  status: 'OPEN',
+  createdAt: '2026-09-19T00:00:00.000Z',
+  updatedAt: '2026-09-19T00:00:00.000Z',
+};
+
+before(async () => {
+  const clientSource = await readFile(
+    new URL('../src/lib/api-client.ts', import.meta.url),
+    'utf8',
+  );
+  const apiSource = await readFile(
+    new URL('../src/features/recruitments/api.ts', import.meta.url),
+    'utf8',
+  );
+  const compile = (source) => {
+    const { outputText } = ts.transpileModule(source, {
+      compilerOptions: { module: ts.ModuleKind.ESNext },
+    });
+    return (
+      'data:text/javascript;base64,' +
+      Buffer.from(outputText).toString('base64')
+    );
+  };
+  ({ createRecruitment } = await import(
+    compile(apiSource.replace('@/lib/api-client', compile(clientSource)))
+  ));
+  server = createServer(async (request, response) => {
+    let body = '';
+    for await (const chunk of request) body += chunk;
+    const payload = JSON.parse(body);
+    if (payload.title === 'network-error') {
+      request.socket.destroy();
+      return;
+    }
+    if (payload.title === 'http-error') {
+      response.writeHead(500, { 'Content-Type': 'text/html' });
+      response.end('<h1>Unavailable</h1>');
+      return;
+    }
+    if (payload.title === 'bad-author') {
+      response.writeHead(400, { 'Content-Type': 'application/json' });
+      response.end('{"message":"존재하는 사용자의 authorId를 입력하세요."}');
+      return;
+    }
+    if (payload.title === 'invalid-json') {
+      response.writeHead(201);
+      response.end('invalid JSON');
+      return;
+    }
+    const valid =
+      request.method === 'POST' &&
+      request.url === '/api/recruitments' &&
+      request.headers['content-type'] === 'application/json' &&
+      payload.title === 'React 스터디' &&
+      payload.category === 'STUDY' &&
+      payload.content === '매주 함께 React를 공부할 팀원을 모집합니다.' &&
+      payload.authorId === 1;
+    response.writeHead(valid ? 201 : 400, {
+      'Content-Type': 'application/json',
+    });
+    response.end(
+      JSON.stringify(valid ? result : { message: 'Invalid request' }),
+    );
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  baseUrl = 'http://127.0.0.1:' + server.address().port;
+  // Node has no browser origin; only resolve relative URLs, preserving real HTTP.
+  globalThis.fetch = (path, init) => realFetch(new URL(path, baseUrl), init);
+});
+
+after(async () => {
+  globalThis.fetch = realFetch;
+  if (server) await new Promise((resolve) => server.close(resolve));
+});
+
+test('form values become a JSON POST with the demo author and return the server row', async () => {
+  assert.equal(typeof createRecruitment, 'function', 'Create API must exist');
+  assert.deepEqual(await createRecruitment(input), result);
+  assert.equal(
+    Object.hasOwn(input, 'authorId'),
+    false,
+    'Form input must not be mutated',
+  );
+});
+
+for (const title of ['http-error', 'bad-author', 'network-error']) {
+  test(title + ' rejects with a user-facing create error', async () => {
+    assert.equal(typeof createRecruitment, 'function', 'Create API must exist');
+    await assert.rejects(createRecruitment({ ...input, title }), {
+      message: '모집글을 등록하지 못했습니다. 잠시 후 다시 시도해주세요.',
+    });
+  });
+}
+
+test('malformed success JSON rejects instead of pretending creation succeeded', async () => {
+  assert.equal(typeof createRecruitment, 'function', 'Create API must exist');
+  await assert.rejects(
+    createRecruitment({ ...input, title: 'invalid-json' }),
+    Error,
+  );
+});

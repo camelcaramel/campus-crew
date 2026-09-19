@@ -1,15 +1,24 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
+import { createRecruitment } from './api';
 import { recruitmentFormSchema, type RecruitmentFormValues } from './schema';
 
 export function RecruitmentForm() {
-  // 입력마다 state를 만들지 않고, 마지막 유효한 제출 결과만 보관합니다.
-  const [submittedData, setSubmittedData] =
-    useState<RecruitmentFormValues | null>(null);
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: createRecruitment,
+    onSuccess: async () => {
+      // 프론트 캐시를 오래된 상태로 표시합니다. DB를 수정하는 함수가 아닙니다.
+      await queryClient.invalidateQueries({ queryKey: ['recruitments'] });
+      router.push('/recruitments');
+    },
+  });
   const {
     register,
     handleSubmit,
@@ -20,8 +29,9 @@ export function RecruitmentForm() {
   });
 
   function onSubmit(data: RecruitmentFormValues) {
-    // handleSubmit이 Zod 검증을 통과한 값만 전달합니다. API 호출은 없습니다.
-    setSubmittedData(data);
+    // handleSubmit이 Zod 검증을 통과한 값만 전달합니다.
+    if (mutation.isPending) return;
+    mutation.mutate(data);
   }
 
   return (
@@ -115,6 +125,13 @@ export function RecruitmentForm() {
           )}
         </div>
 
+        {/* 필드별 입력 오류와 서버 요청 실패를 구분합니다. */}
+        {mutation.isError && (
+          <p role="alert" className="text-sm text-red-600!">
+            {mutation.error.message}
+          </p>
+        )}
+
         <div className="flex justify-end gap-3">
           <Link
             href="/recruitments"
@@ -124,29 +141,13 @@ export function RecruitmentForm() {
           </Link>
           <button
             type="submit"
-            className="h-10 cursor-pointer rounded-lg bg-primary-600 px-5 text-sm font-medium text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+            disabled={mutation.isPending}
+            className="h-10 cursor-pointer rounded-lg bg-primary-600 px-5 text-sm font-medium text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            등록
+            {mutation.isPending ? '등록 중...' : '등록'}
           </button>
         </div>
       </form>
-
-      {submittedData && (
-        <div
-          role="status"
-          className="mt-6 rounded-lg border border-green-200 bg-green-50 p-4"
-        >
-          <h2 className="font-semibold text-green-800">
-            마지막 유효한 제출 값
-          </h2>
-          <p className="mt-1 text-sm text-green-800!">
-            입력 검증을 통과했습니다. 아직 API로 전송하거나 저장하지 않았습니다.
-          </p>
-          <pre className="mt-3 text-sm whitespace-pre-wrap break-words">
-            {JSON.stringify(submittedData, null, 2)}
-          </pre>
-        </div>
-      )}
     </>
   );
 }

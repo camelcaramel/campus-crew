@@ -1,8 +1,17 @@
 # Campus Crew
 
+## 19차시: 모집글 작성 mutation
+
+기존 RHF + Zod 폼에서 실제 POST를 보내고, 성공하면 목록 캐시를 무효화한 뒤 목록으로 이동합니다. 요청 중 버튼을 비활성화하고 서버 오류는 폼 안에 표시합니다.
+
+- [19차시 구현·학습 포인트·실제 검증](docs/session-19-create-mutation.md)
+- [19차시 구현 계획](docs/superpowers/plans/2026-09-19-campus-crew-session-19-create-mutation.md)
+- 실행: 기존 DB를 유지한 채 `npm run dev:api`, `npm run dev:web`; [모집글 작성](http://localhost:3000/recruitments/new)
+- 임시 작성자는 `features/recruitments/api.ts`의 `DEMO_AUTHOR_ID` 한 곳에서 관리합니다. 현재 DB의 teacher ID는 1입니다.
+
 ## 18차시: TanStack Query로 모집글 조회 연결
 
-Next의 모집글 목록·상세가 same-origin `/api/*`를 통해 Nest와 PostgreSQL의 실제 데이터를 조회합니다. TanStack Query `5.103.1`을 사용하며, 기존 작성 폼은 아직 제출 결과를 콘솔로 확인하는 단계입니다.
+18차시에서는 Next의 모집글 목록·상세를 same-origin `/api/*`로 Nest와 PostgreSQL에 연결했습니다. TanStack Query `5.103.1`을 사용하며, 당시 작성 폼은 유효한 제출 값을 화면에서 확인하는 단계였습니다.
 
 - [18차시 구조·실행·학습 포인트·검증](docs/session-18-frontend-query-integration.md)
 - [18차시 구현 계획](docs/superpowers/plans/2026-09-19-campus-crew-session-18-frontend-query-integration.md)
