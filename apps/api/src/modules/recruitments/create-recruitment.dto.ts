@@ -14,9 +14,4 @@ export class CreateRecruitmentDto {
   @Allow()
   @ApiProperty({ enum: ['STUDY', 'PROJECT', 'CONTEST'], example: 'STUDY' })
   category!: 'STUDY' | 'PROJECT' | 'CONTEST';
-
-  // auth 차시에서는 body 대신 현재 로그인 사용자 id를 사용합니다.
-  @Allow()
-  @ApiProperty({ example: 1 })
-  authorId!: number;
 }

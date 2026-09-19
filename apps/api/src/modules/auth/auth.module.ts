@@ -1,3 +1,4 @@
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PrismaModule } from '../../prisma/prisma.module';
@@ -11,7 +12,7 @@ import { authJwtOptions } from './auth-config';
     JwtModule.registerAsync({ useFactory: authJwtOptions }),
   ],
   controllers: [AuthController],
-  providers: [AuthService],
-  exports: [AuthService],
+  providers: [AuthService, JwtAuthGuard],
+  exports: [AuthService, JwtAuthGuard],
 })
 export class AuthModule {}

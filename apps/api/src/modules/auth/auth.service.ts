@@ -8,6 +8,7 @@ import { compare, hash } from 'bcryptjs';
 import { Prisma } from '../../../generated/prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { SignupDto } from './signup.dto';
+import type { AuthUser } from '../../common/types/auth-user';
 import type { LoginDto } from './login.dto';
 
 @Injectable()
@@ -34,8 +35,8 @@ export class AuthService {
     return { user, token };
   }
 
-  // 23차시 Guard에서도 이 검증을 재사용합니다. decode만으로 인증하지 않습니다.
-  async authenticate(token: unknown) {
+  // auth/me와 모집글 Guard가 이 검증을 공유합니다. decode만으로 인증하지 않습니다.
+  async authenticate(token: unknown): Promise<AuthUser> {
     if (typeof token !== 'string' || !token) throw new UnauthorizedException();
     let payload: { sub?: unknown; email?: unknown; exp?: unknown };
     try {

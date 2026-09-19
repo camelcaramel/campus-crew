@@ -1,6 +1,8 @@
 import {
   BadRequestException,
   Injectable,
+  ForbiddenException,
+  UnauthorizedException,
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma } from '../../../generated/prisma/client';
@@ -34,27 +36,14 @@ export class RecruitmentsService {
     return recruitment;
   }
 
-  async create(body: CreateRecruitmentDto) {
-    if (
-      !Number.isInteger(body.authorId) ||
-      body.authorId < 1 ||
-      body.authorId > 2147483647
-    ) {
-      throw new BadRequestException('authorId는 양의 정수여야 합니다.');
-    }
-    const author = await this.prisma.user.findUnique({
-      where: { id: body.authorId },
-    });
-    if (!author) {
-      throw new BadRequestException('존재하는 사용자의 authorId를 입력하세요.');
-    }
+  async create(userId: number, body: CreateRecruitmentDto) {
     try {
       return await this.prisma.recruitment.create({
         data: {
           title: body.title,
           content: body.content,
           category: body.category,
-          authorId: body.authorId,
+          authorId: userId,
         },
         include: authorInclude,
       });
@@ -64,16 +53,16 @@ export class RecruitmentsService {
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2003'
       ) {
-        throw new BadRequestException(
-          '존재하는 사용자의 authorId를 입력하세요.',
+        throw new UnauthorizedException(
+          '사용자 정보를 확인할 수 없습니다. 다시 로그인해주세요.',
         );
       }
       throw error;
     }
   }
 
-  async update(id: number, body: UpdateRecruitmentDto) {
-    this.checkIdRange(id);
+  async update(id: number, userId: number, body: UpdateRecruitmentDto) {
+    await this.requireOwner(id, userId);
     try {
       return await this.prisma.recruitment.update({
         where: { id },
@@ -97,8 +86,8 @@ export class RecruitmentsService {
     }
   }
 
-  async remove(id: number) {
-    this.checkIdRange(id);
+  async remove(id: number, userId: number) {
+    await this.requireOwner(id, userId);
     try {
       await this.prisma.recruitment.delete({ where: { id } });
     } catch (error) {
@@ -109,6 +98,18 @@ export class RecruitmentsService {
         throw new NotFoundException('모집글을 찾을 수 없습니다.');
       }
       throw error;
+    }
+  }
+
+  // Authorization: 인증된 사용자라도 작성자 본인의 글만 변경할 수 있습니다.
+  private async requireOwner(id: number, userId: number): Promise<void> {
+    const recruitment = await this.findOne(id);
+    if (recruitment.authorId !== userId) {
+      throw new ForbiddenException({
+        statusCode: 403,
+        code: 'RECRUITMENT_FORBIDDEN',
+        message: '작성자만 수정하거나 삭제할 수 있습니다.',
+      });
     }
   }
 

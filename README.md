@@ -394,3 +394,13 @@ API 시작 전 `apps/api/.env`에 실제 무작위 `JWT_SECRET`을 설정하세�
 - [22차시 구현 설명·실행 방법·학생 검증·실제 검증 기록](docs/session-22-login-jwt-cookie.md)
 - [22차시 구현 계획](docs/superpowers/plans/2026-09-19-campus-crew-session-22-login-jwt-cookie.md)
 - 다음 23차시에는 현재 JWT 검증을 Guard에서 재사용하고 작성자 권한을 적용합니다.
+
+## 23차시 — JWT Guard와 작성자 권한
+
+모집글 POST/PATCH/DELETE는 로그인해야 사용할 수 있으며, 수정·삭제는 작성자만 가능합니다.
+현재 사용자 id는 서버가 JWT와 DB로 결정합니다. 작성 요청의 `authorId`와 `DEMO_AUTHOR_ID`를 제거하고, 상세 화면은 작성자에게만 수정·삭제 UI를 표시합니다.
+
+- [23차시 구현 설명·변경 파일·검증 결과](docs/session-23-auth-guard-owner-authorization.md)
+- [23차시 구현 계획](docs/superpowers/plans/2026-09-19-campus-crew-session-23-auth-guard-owner-authorization.md)
+- [23차시 Postman 컬렉션](docs/postman/campus-crew-session-23.postman_collection.json)
+- 다음 24차시에는 Guard와 CurrentUser를 Application 지원/취소에 재사용합니다.

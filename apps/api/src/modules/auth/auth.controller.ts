@@ -1,3 +1,6 @@
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import type { AuthUser } from '../../common/types/auth-user';
 import {
   Body,
   Controller,
@@ -5,10 +8,10 @@ import {
   Header,
   HttpCode,
   Post,
-  Req,
+  UseGuards,
   Res,
 } from '@nestjs/common';
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
 import {
   ApiBadRequestResponse,
   ApiConflictResponse,
@@ -52,6 +55,7 @@ export class AuthController {
   }
 
   @Get('me')
+  @UseGuards(JwtAuthGuard)
   @Header('Cache-Control', 'no-store')
   @ApiCookieAuth()
   @ApiOperation({ summary: 'Cookie JWT를 검증하고 현재 사용자 조회' })
@@ -59,11 +63,8 @@ export class AuthController {
   @ApiUnauthorizedResponse({
     description: 'Cookie 없음, 만료 또는 유효하지 않은 인증',
   })
-  async me(@Req() request: Request): Promise<AuthResponseDto> {
-    const cookies = request.cookies as Record<string, unknown> | undefined;
-    return {
-      user: await this.authService.authenticate(cookies?.[AUTH_COOKIE_NAME]),
-    };
+  me(@CurrentUser() user: AuthUser): AuthResponseDto {
+    return { user };
   }
 
   @Post('logout')
