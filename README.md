@@ -1,5 +1,17 @@
 # Campus Crew
 
+## 15차시: 로컬 DB 실행
+
+Docker를 실행하고 루트 `.env.example`을 `.env`로 최초 한 번 복사한 뒤 실행합니다. 기존 `.env`는 덮어쓰지 않습니다.
+
+```bash
+docker compose up -d
+docker compose ps
+docker compose down
+```
+
+DBeaver 접속 정보와 재시작 실습은 [15차시 로컬 DB 안내](docs/session-15-local-database.md)를 참고하세요. 아래는 기존 앱 실행 안내입니다.
+
 TypeScript 풀스택 30차시 수업의 **7차시 checkpoint**입니다. 하나의 저장소에 Next.js 웹과 NestJS API를 두고, npm workspaces로 설치·실행합니다.
 
 기존 개발 규칙과 두 라우트를 유지하면서 Figma 기준의 Header와 Container를 추가했습니다. 이전 실습은 [4차시](docs/session-04-checkpoint.md), [5차시](docs/session-05-checkpoint.md), [6차시](docs/session-06-checkpoint.md), 이번 실습과 검증 결과는 [7차시 checkpoint](docs/session-07-checkpoint.md)를 참고하세요.
@@ -42,7 +54,7 @@ node --version
 npm --version
 ```
 
-전역 Next.js/Nest CLI 설치와 Docker는 필요하지 않습니다. 환경 파일 없이도 시작 화면과 API 기본 포트 4000이 동작합니다. 5차시에서는 아래 예제를 복사해 설정 변경을 실습합니다. 패키지 최초 설치에는 인터넷 연결이 필요합니다.
+기존 web/API 실행에는 전역 Next.js/Nest CLI 설치와 Docker가 필요하지 않습니다. 15차시 DB 실습에는 Docker가 필요합니다. 환경 파일 없이도 시작 화면과 API 기본 포트 4000이 동작합니다. 5차시에서는 아래 예제를 복사해 설정 변경을 실습합니다. 패키지 최초 설치에는 인터넷 연결이 필요합니다.
 
 ## 설치와 실행
 
@@ -231,7 +243,7 @@ Tailwind CSS 4는 `@import 'tailwindcss'`와 PostCSS 플러그인을 사용합�
 
 - `docs/`에 요구사항, API 설계, 수업 노트를 추가합니다.
 - CI를 배우는 차시에 루트 `.github/workflows/`를 생성합니다.
-- 데이터베이스·Docker를 배우는 차시에 루트 `docker-compose.yml`을 추가합니다.
+- 15차시 로컬 데이터베이스 설정은 루트 `compose.yaml`에 있습니다.
 
 5차시에도 위 후속 설정들은 생성하지 않습니다. 앱 구조를 바꾸지 않고 추가할 수 있습니다. Next.js 내부의 기본 번들러인 Turbopack과 별개로, monorepo 실행 도구인 Turborepo/Nx는 사용하지 않습니다.
 
@@ -246,7 +258,7 @@ Tailwind CSS 4는 `@import 'tailwindcss'`와 PostCSS 플러그인을 사용합�
 
 ## 환경 변수 실습
 
-환경 파일은 **앱 루트**에 둡니다. 저장소 루트나 `src/`에 통합 환경 파일을 만들지 않습니다.
+앱 환경 파일은 **앱 루트**에 둡니다. 15차시부터 저장소 루트의 `.env`는 Compose 전용으로 사용하며 앱의 환경 파일과 구분합니다.
 
 | 앱  | Git에 공유하는 예제     | 개인 실행 파일        | 예제 값                                          |
 | --- | ----------------------- | --------------------- | ------------------------------------------------ |
@@ -295,7 +307,7 @@ git status --short
 git diff
 ```
 
-첫 명령은 개인 환경 파일 두 개를 출력해야 합니다. 커밋에 포함하는 환경 파일은 앱별 `.env.example` 두 개뿐입니다.
+첫 명령은 개인 환경 파일 두 개를 출력해야 합니다. 커밋에 포함하는 환경 파일은 앱별 `.env.example` 두 개와 15차시 루트 `.env.example`뿐입니다. 루트 `.env`도 같은 ignore 규칙이 적용됩니다.
 
 ## 확인과 문제 해결
 
