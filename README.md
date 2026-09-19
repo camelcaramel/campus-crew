@@ -383,3 +383,14 @@ npm --version
 - [21차시 수업 노트와 실제 검증 기록](docs/session-21-signup.md)
 - [21차시 Postman 컬렉션](docs/postman/session-21-signup.postman_collection.json)
 - 로그인과 JWT는 다음 22차시에서 구현합니다.
+
+## 22차시 — JWT HttpOnly Cookie 로그인
+
+`POST /api/auth/login`, `GET /api/auth/me`, `POST /api/auth/logout`을 구현했습니다.
+`/login` 폼과 Header가 실제 API 및 TanStack Query 인증 캐시에 연결됩니다.
+API 시작 전 `apps/api/.env`에 실제 무작위 `JWT_SECRET`을 설정하세요.
+기존 signup·모집글 CRUD와 DB schema는 그대로 유지합니다.
+
+- [22차시 구현 설명·실행 방법·학생 검증·실제 검증 기록](docs/session-22-login-jwt-cookie.md)
+- [22차시 구현 계획](docs/superpowers/plans/2026-09-19-campus-crew-session-22-login-jwt-cookie.md)
+- 다음 23차시에는 현재 JWT 검증을 Guard에서 재사용하고 작성자 권한을 적용합니다.

@@ -6,6 +6,8 @@ import { BadRequestException, Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import cookieParser from 'cookie-parser';
+import { AUTH_COOKIE_NAME } from './modules/auth/auth-cookie';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -30,6 +32,7 @@ async function bootstrap() {
     bodyParser: false,
   });
   app.useBodyParser('json');
+  app.use(cookieParser());
   app.useBodyParser('urlencoded', { extended: true });
   // JSON 파싱 오류의 원문에는 password가 포함될 수 있어 Nest 전달 전에 제거합니다.
   app.use(
@@ -55,9 +58,10 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('Campus Crew API')
     .setDescription(
-      'Prisma와 PostgreSQL 기반 모집글 CRUD 및 회원가입·비밀번호 hash 실습 API입니다.',
+      'Prisma 모집글 CRUD, 회원가입 및 JWT HttpOnly Cookie 로그인 실습 API입니다.',
     )
     .setVersion('1.0')
+    .addCookieAuth(AUTH_COOKIE_NAME)
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, document);
