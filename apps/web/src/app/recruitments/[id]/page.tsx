@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useMeQuery } from '@/features/auth/queries';
+import { ApplicationSection } from '@/features/applications/application-section';
 import { useState } from 'react';
 import { ErrorMessage } from '@/components/ui/error-message';
 import { Spinner } from '@/components/ui/spinner';
@@ -182,6 +183,11 @@ export default function RecruitmentDetailPage() {
             {mutation.error.message}
           </p>
         )}
+        <ApplicationSection
+          recruitmentId={id}
+          authorId={recruitment.author.id}
+          status={recruitment.status}
+        />
       </article>
     </section>
   );
