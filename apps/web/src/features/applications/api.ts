@@ -1,5 +1,7 @@
 import type {
   Application,
+  ApplicationDecision,
+  ManagedApplication,
   CreateApplicationInput,
   MyApplicationResponse,
 } from './types';
@@ -108,4 +110,35 @@ export async function cancelMyApplication(
     },
     expectedUserId,
   );
+}
+
+export async function getApplications(
+  recruitmentId: string | number,
+  signal?: AbortSignal,
+  expectedUserId?: number,
+): Promise<ManagedApplication[]> {
+  const response = await request(
+    `${prefix(recruitmentId)}/applications`,
+    { signal },
+    expectedUserId,
+  );
+  return response.json() as Promise<ManagedApplication[]>;
+}
+
+export async function updateApplicationStatus(
+  recruitmentId: string | number,
+  applicationId: number,
+  status: ApplicationDecision,
+  expectedUserId?: number,
+): Promise<ManagedApplication> {
+  const response = await request(
+    `${prefix(recruitmentId)}/applications/${encodeURIComponent(String(applicationId))}`,
+    {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    },
+    expectedUserId,
+  );
+  return response.json() as Promise<ManagedApplication>;
 }

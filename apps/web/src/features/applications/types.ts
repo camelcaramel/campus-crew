@@ -11,3 +11,8 @@ export interface MyApplicationResponse {
 export interface CreateApplicationInput {
   message: string;
 }
+
+export type ApplicationDecision = Exclude<ApplicationState, 'PENDING'>;
+export interface ManagedApplication extends Application {
+  applicant: { id: number; name: string; email: string };
+}

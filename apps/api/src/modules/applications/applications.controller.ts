@@ -7,6 +7,7 @@ import {
   HttpCode,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -15,6 +16,7 @@ import {
   ApiConflictResponse,
   ApiCookieAuth,
   ApiCreatedResponse,
+  ApiForbiddenResponse,
   ApiHeader,
   ApiNoContentResponse,
   ApiNotFoundResponse,
@@ -28,6 +30,7 @@ import type { AuthUser } from '../../common/types/auth-user';
 import { ApplicationsService } from './applications.service';
 import { CreateApplicationDto } from './create-application.dto';
 import { ApplicationSessionGuard } from './application-session.guard';
+import { UpdateApplicationStatusDto } from './update-application-status.dto';
 
 @ApiTags('applications')
 @ApiCookieAuth()
@@ -51,6 +54,42 @@ import { ApplicationSessionGuard } from './application-session.guard';
 @Controller('api/recruitments/:id')
 export class ApplicationsController {
   constructor(private readonly applications: ApplicationsService) {}
+
+  @Get('applications')
+  @Header('Cache-Control', 'no-store')
+  @ApiOkResponse({
+    description:
+      '[{ id, message, status, createdAt, applicant: { id, name, email } }]',
+  })
+  @ApiForbiddenResponse({ description: 'APPLICATION_FORBIDDEN: 작성자 전용' })
+  findAll(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.applications.findAll(id, user.id);
+  }
+
+  @Patch('applications/:applicationId')
+  @Header('Cache-Control', 'no-store')
+  @ApiOkResponse({
+    description:
+      '{ id, message, status, createdAt, applicant: { id, name, email } }',
+  })
+  @ApiForbiddenResponse({ description: 'APPLICATION_FORBIDDEN: 작성자 전용' })
+  @ApiBadRequestResponse({
+    description: 'status는 APPROVED 또는 REJECTED만 허용',
+  })
+  @ApiConflictResponse({
+    description: 'APPLICATION_INVALID_STATUS / AUTH_SESSION_CHANGED',
+  })
+  updateStatus(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('applicationId', ParseIntPipe) applicationId: number,
+    @CurrentUser() user: AuthUser,
+    @Body() body: UpdateApplicationStatusDto,
+  ) {
+    return this.applications.updateStatus(id, applicationId, user.id, body);
+  }
 
   @Post('applications')
   @Header('Cache-Control', 'no-store')

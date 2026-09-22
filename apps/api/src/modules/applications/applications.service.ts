@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -8,6 +9,7 @@ import {
 import { Prisma } from '../../../generated/prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { CreateApplicationDto } from './create-application.dto';
+import type { UpdateApplicationStatusDto } from './update-application-status.dto';
 
 const applicationSelect = {
   id: true,
@@ -16,9 +18,83 @@ const applicationSelect = {
   createdAt: true,
 } as const;
 
+// 관계 전체를 include하지 않아 passwordHash 등 비공개 필드가 나가지 않습니다.
+const managedApplicationSelect = {
+  ...applicationSelect,
+  applicant: { select: { id: true, name: true, email: true } },
+} as const;
+
 @Injectable()
 export class ApplicationsService {
   constructor(private readonly prisma: PrismaService) {}
+
+  async findAll(recruitmentId: number, userId: number) {
+    await this.requireOwner(recruitmentId, userId);
+    return this.prisma.application.findMany({
+      where: { recruitmentId },
+      select: managedApplicationSelect,
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+    });
+  }
+
+  async updateStatus(
+    recruitmentId: number,
+    applicationId: number,
+    userId: number,
+    body: UpdateApplicationStatusDto,
+  ) {
+    await this.requireOwner(recruitmentId, userId);
+    if (
+      !Number.isInteger(applicationId) ||
+      applicationId < -2147483648 ||
+      applicationId > 2147483647
+    ) {
+      throw new BadRequestException({
+        statusCode: 400,
+        code: 'INVALID_APPLICATION_ID',
+        message: 'applicationId가 DB 정수 범위를 벗어났습니다.',
+      });
+    }
+    const where = { id: applicationId, recruitmentId };
+    const application = await this.prisma.application.findFirst({
+      where,
+      select: applicationSelect,
+    });
+    if (!application) throw this.notFound();
+    if (application.status !== 'PENDING') throw this.invalidStatus();
+    try {
+      // 선조회 후 다른 요청이 승인/거절하거나 취소해도 PENDING만 변경합니다.
+      return await this.prisma.application.update({
+        where: { ...where, status: 'PENDING' },
+        data: { status: body.status },
+        select: managedApplicationSelect,
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        const remaining = await this.prisma.application.findFirst({
+          where,
+          select: { id: true },
+        });
+        if (!remaining) throw this.notFound();
+        throw this.invalidStatus();
+      }
+      throw error;
+    }
+  }
+
+  private async requireOwner(recruitmentId: number, userId: number) {
+    const recruitment = await this.requireRecruitment(recruitmentId);
+    if (recruitment.authorId !== userId) {
+      throw new ForbiddenException({
+        statusCode: 403,
+        code: 'APPLICATION_FORBIDDEN',
+        message: '모집글 작성자만 지원자를 관리할 수 있습니다.',
+      });
+    }
+  }
 
   async create(
     recruitmentId: number,
@@ -135,7 +211,7 @@ export class ApplicationsService {
     return new ConflictException({
       statusCode: 409,
       code: 'APPLICATION_INVALID_STATUS',
-      message: '대기 중인 지원만 취소할 수 있습니다.',
+      message: '대기 중인 지원만 취소하거나 승인·거절할 수 있습니다.',
     });
   }
 }

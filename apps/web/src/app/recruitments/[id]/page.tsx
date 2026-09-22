@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useMeQuery } from '@/features/auth/queries';
 import { ApplicationSection } from '@/features/applications/application-section';
+import { ApplicationManager } from '@/features/applications/application-manager';
 import { useState } from 'react';
 import { ErrorMessage } from '@/components/ui/error-message';
 import { Spinner } from '@/components/ui/spinner';
@@ -182,6 +183,13 @@ export default function RecruitmentDetailPage() {
           <p role="alert" className="mt-4 text-sm text-red-600!">
             {mutation.error.message}
           </p>
+        )}
+        {isOwner && me.data && (
+          <ApplicationManager
+            key={`${id}:${me.data.user.id}`}
+            recruitmentId={id}
+            userId={me.data.user.id}
+          />
         )}
         <ApplicationSection
           recruitmentId={id}
