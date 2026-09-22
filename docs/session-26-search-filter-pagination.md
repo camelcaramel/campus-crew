@@ -115,7 +115,7 @@ getRecruitments는 URLSearchParams로 인코딩하며 Promise<RecruitmentListRes
 
 ## 최종 확인
 
-최종 `npm run check` (format:check, API/web lint, API/web production build)와 Prisma `db:typecheck`는 모두 종료 코드 0으로 통과했다. 범위 밖 page=99에서 첫 페이지 복귀도 브라우저에서 확인했다. 검증용 행 정리 후 기존 세 테이블의 전체 snapshot hash가 일치하며, 25차시 worktree는 clean이고 HEAD `d363a16`을 유지한다. Git sequence 값은 테스트 실행으로 증가할 수 있다.
+최종 `npm run check` (format:check, API/web lint, API/web production build)와 Prisma `db:typecheck`는 모두 종료 코드 0으로 통과했다. 범위 밖 page=99에서 첫 페이지 복귀도 브라우저에서 확인했다. 검증용 행 정리 후 기존 세 테이블의 전체 snapshot hash가 일치하며, 25차시 worktree는 clean이고 HEAD `d363a16`을 유지한다. DB sequence 값은 테스트 실행으로 증가할 수 있다.
 
 독립 리뷰에서 발견한 두 항목은 모두 수정했다. 동시 쓰기 중 offset 경계 변동은 위에 설명한 수업 범위의 제한으로 남는다. 작업은 별도 로컬 브랜치에 커밋하며 merge/push하지 않는다.
 
