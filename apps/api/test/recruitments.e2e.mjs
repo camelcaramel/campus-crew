@@ -164,14 +164,23 @@ test('기존 루트 상태 응답을 보존한다', async () => {
 test('목록/상세가 실제 DB seed와 일치하고 author의 id/name만 노출한다', async () => {
   const response = await request('GET', '/api/recruitments');
   assert.equal(response.status, 200);
-  const items = await response.json();
-  const expected = initialRows.recruitments.map((row) => ({
-    ...row,
-    author: {
-      id: row.authorId,
-      name: initialRows.users.find(({ id }) => id === row.authorId).name,
-    },
-  }));
+  const { items, meta } = await response.json();
+  assert.deepEqual(meta, {
+    page: 1,
+    limit: 10,
+    total: initialRows.recruitments.length,
+    totalPages: Math.ceil(initialRows.recruitments.length / 10),
+  });
+  const expected = [...initialRows.recruitments]
+    .sort((a, b) => b.createdAt - a.createdAt || b.id - a.id)
+    .slice(0, 10)
+    .map((row) => ({
+      ...row,
+      author: {
+        id: row.authorId,
+        name: initialRows.users.find(({ id }) => id === row.authorId).name,
+      },
+    }));
   assert.deepEqual(items, JSON.parse(JSON.stringify(expected)));
   const detail = await request('GET', '/api/recruitments/' + items[0].id);
   assert.equal(detail.status, 200);
@@ -192,11 +201,108 @@ test('POST는 201/OPEN으로 DB에 저장하고 입력 id/status/relation 객체
     await db.query('SELECT * FROM recruitments WHERE id = $1', [row.id])
   ).rows[0];
   assert.equal(persisted.title, prefix + 'create');
-  const items = await (await request('GET', '/api/recruitments')).json();
+  const { items } = await (
+    await request('GET', '/api/recruitments?q=' + encodeURIComponent(row.title))
+  ).json();
   assert.deepEqual(
     items.find(({ id }) => id === row.id),
     row,
   );
+});
+
+test('26차시: 제목 검색/카테고리/페이지를 결합하고 총 개수와 안정적인 최신순을 반환한다', async () => {
+  const search = prefix + 'React';
+  const rows = [];
+  for (const category of ['STUDY', 'STUDY', 'STUDY', 'PROJECT', 'CONTEST']) {
+    rows.push(await createRow('React-' + rows.length, { category }));
+  }
+  await createRow('content-only', { content: search });
+  // 동률 createdAt에서도 id desc로 페이지 간 순서가 고정된다.
+  await db.query(
+    'UPDATE recruitments SET "createdAt" = $1 WHERE id = ANY($2::int[])',
+    ['2026-01-01T00:00:00Z', rows.map(({ id }) => id)],
+  );
+  const list = async (query) => {
+    const response = await request(
+      'GET',
+      '/api/recruitments?' + query,
+      undefined,
+      '',
+    );
+    assert.equal(response.status, 200);
+    return response.json();
+  };
+  const q = encodeURIComponent(search.toLowerCase());
+  const first = await list('q=' + q + '&category=STUDY&page=1&limit=2');
+  assert.deepEqual(first.meta, { page: 1, limit: 2, total: 3, totalPages: 2 });
+  assert.deepEqual(
+    first.items.map(({ id }) => id),
+    [rows[2].id, rows[1].id],
+  );
+  assert.deepEqual(Object.keys(first.items[0].author).sort(), ['id', 'name']);
+  const second = await list('q=' + q + '&category=STUDY&page=2&limit=2');
+  assert.deepEqual(
+    second.items.map(({ id }) => id),
+    [rows[0].id],
+  );
+  assert.deepEqual(second.meta, { page: 2, limit: 2, total: 3, totalPages: 2 });
+  const allCategories = await list('q=' + q);
+  assert.equal(allCategories.meta.total, 5);
+  for (const category of ['PROJECT', 'CONTEST']) {
+    const filtered = await list('q=' + q + '&category=' + category);
+    assert.equal(filtered.meta.total, 1);
+    assert.equal(filtered.items[0].category, category);
+  }
+  const categoryOnly = await list('category=STUDY&limit=50');
+  const expectedCount = Number(
+    (
+      await db.query(
+        "SELECT count(*) FROM recruitments WHERE category = 'STUDY'",
+      )
+    ).rows[0].count,
+  );
+  assert.equal(categoryOnly.meta.total, expectedCount);
+  assert.ok(categoryOnly.items.every((row) => row.category === 'STUDY'));
+  const absent = await list('q=' + encodeURIComponent(prefix + 'absent'));
+  assert.deepEqual(absent, {
+    items: [],
+    meta: { page: 1, limit: 10, total: 0, totalPages: 0 },
+  });
+  const outside = await list('q=' + q + '&page=99&limit=2');
+  assert.equal(outside.items.length, 0);
+  assert.equal(outside.meta.totalPages, 3);
+  assert.deepEqual(await list('q='), await list(''));
+});
+
+test('26차시: 잘못된 query는 500 대신 400으로 차단한다', async () => {
+  for (const query of [
+    'page=0',
+    'page=-1',
+    'page=1.5',
+    'page=abc',
+    'page=',
+    'page=1e2',
+    'page=9007199254740993',
+    'page=2147483647&limit=50',
+    'limit=0',
+    'limit=-1',
+    'limit=51',
+    'limit=2.5',
+    'limit=abc',
+    'limit=',
+    'category=INVALID',
+    'category=study',
+    'category=',
+    'page=1&page=2',
+    'q=a&q=b',
+    'category=STUDY&category=PROJECT',
+  ]) {
+    assert.equal(
+      (await request('GET', '/api/recruitments?' + query)).status,
+      400,
+      query,
+    );
+  }
 });
 
 test('PATCH는 허용 필드만 수정하며 생략한 내용과 작성자를 유지한다', async () => {

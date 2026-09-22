@@ -11,6 +11,8 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
+  ValidationPipe,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -26,6 +28,7 @@ import {
 import { CreateRecruitmentDto } from './create-recruitment.dto';
 import { RecruitmentsService } from './recruitments.service';
 import { UpdateRecruitmentDto } from './update-recruitment.dto';
+import { RecruitmentListQueryDto } from './recruitment-list-query.dto';
 
 @ApiTags('recruitments')
 @Controller('api/recruitments')
@@ -33,8 +36,14 @@ export class RecruitmentsController {
   constructor(private readonly recruitmentsService: RecruitmentsService) {}
 
   @Get()
-  findAll() {
-    return this.recruitmentsService.findAll();
+  @ApiOkResponse({
+    description: 'items와 meta(page, limit, total, totalPages)',
+  })
+  findAll(
+    @Query(new ValidationPipe({ transform: true }))
+    query: RecruitmentListQueryDto,
+  ) {
+    return this.recruitmentsService.findAll(query);
   }
 
   @Get(':id')

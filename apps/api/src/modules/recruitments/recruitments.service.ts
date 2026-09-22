@@ -9,6 +9,7 @@ import { Prisma } from '../../../generated/prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { CreateRecruitmentDto } from './create-recruitment.dto';
 import type { UpdateRecruitmentDto } from './update-recruitment.dto';
+import type { RecruitmentListQueryDto } from './recruitment-list-query.dto';
 
 // 사용자 전체를 include하지 않고 응답에 필요한 기본 정보만 선택합니다.
 const authorInclude = { author: { select: { id: true, name: true } } };
@@ -17,11 +18,30 @@ const authorInclude = { author: { select: { id: true, name: true } } };
 export class RecruitmentsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  findAll() {
-    return this.prisma.recruitment.findMany({
-      orderBy: { id: 'asc' },
-      include: authorInclude,
-    });
+  async findAll({ page, limit, q, category }: RecruitmentListQueryDto) {
+    const skip = (page - 1) * limit;
+    if (!Number.isSafeInteger(skip) || skip > 2147483647) {
+      throw new BadRequestException('페이지 범위를 초과했습니다.');
+    }
+    const where: Prisma.RecruitmentWhereInput = {
+      ...(q ? { title: { contains: q, mode: 'insensitive' } } : {}),
+      ...(category ? { category } : {}),
+    };
+    // 같은 where로 전체 수를 계산해야 필터 결과의 페이지 수가 맞습니다.
+    const [items, total] = await Promise.all([
+      this.prisma.recruitment.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        include: authorInclude,
+      }),
+      this.prisma.recruitment.count({ where }),
+    ]);
+    return {
+      items,
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
   }
 
   async findOne(id: number) {

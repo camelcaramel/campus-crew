@@ -1,3 +1,15 @@
+export type RecruitmentListParams = {
+  page: number;
+  limit: number;
+  q?: string;
+  category?: Recruitment['category'];
+};
+
+export type RecruitmentListResponse = {
+  items: Recruitment[];
+  meta: { page: number; limit: number; total: number; totalPages: number };
+};
+
 export type Recruitment = {
   id: number;
   category: 'STUDY' | 'PROJECT' | 'CONTEST';

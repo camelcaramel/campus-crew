@@ -3,6 +3,8 @@ import type {
   CreateRecruitmentInput,
   CreateRecruitmentRequest,
   Recruitment,
+  RecruitmentListParams,
+  RecruitmentListResponse,
   UpdateRecruitmentRequest,
 } from './types';
 
@@ -49,8 +51,16 @@ export async function createRecruitment(
   }
 }
 
-export function getRecruitments(): Promise<Recruitment[]> {
-  return getJson<Recruitment[]>('/api/recruitments');
+export function getRecruitments(
+  params: RecruitmentListParams,
+): Promise<RecruitmentListResponse> {
+  const query = new URLSearchParams({
+    page: String(params.page),
+    limit: String(params.limit),
+  });
+  if (params.q) query.set('q', params.q);
+  if (params.category) query.set('category', params.category);
+  return getJson<RecruitmentListResponse>(`/api/recruitments?${query}`);
 }
 
 export async function updateRecruitment(
