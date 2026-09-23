@@ -16,7 +16,8 @@
     "db:typecheck": "tsc --project tsconfig.prisma.json",
     "test": "node test/run-tests.cjs",
     "test:legacy": "node test/run-tests.cjs --legacy",
-    "test:prepare": "node test/run-tests.cjs --prepare"
+    "test:prepare": "node test/run-tests.cjs --prepare",
+    "test:e2e:prepare": "node test/run-tests.cjs --prepare --e2e"
   },
   "dependencies": {
     "@nestjs/common": "11.2.3",

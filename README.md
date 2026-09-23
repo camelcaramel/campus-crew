@@ -417,3 +417,7 @@ API 시작 전 `apps/api/.env`에 실제 무작위 `JWT_SECRET`을 설정하세�
 - `npm run test:prepare -w apps/api` → `npm test -w apps/api`
 - 전체 API 회귀 검증: `npm run test:e2e -w apps/api`
 - 다음 28차시에는 Playwright smoke와 GitHub Actions PR gate를 연결합니다.
+
+## 28차시: Playwright Smoke Test + CI
+
+[28차시 실행 및 수업 안내](docs/session-28-playwright-ci.md)를 참고하세요. 별도 테스트 DB와 `.env.test`를 준비한 뒤 `npm run test:e2e:prepare`, `npm run build`, `npm run test:e2e` 순서로 실제 로그인 → 목록 → 상세를 검증합니다. build에 필요한 `DATABASE_URL`과 `API_ORIGIN` 설정은 안내 문서에 있습니다. GitHub Actions는 PR/main push마다 format, lint, API/web test, build, Chromium smoke를 실행합니다.

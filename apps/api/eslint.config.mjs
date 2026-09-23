@@ -18,6 +18,7 @@ export default defineConfig([
         __dirname: 'readonly',
         process: 'readonly',
         URL: 'readonly',
+        Buffer: 'readonly',
       },
     },
     rules: { '@typescript-eslint/no-require-imports': 'off' },

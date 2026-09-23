@@ -1,28 +1,11 @@
 const { spawnSync } = require('node:child_process');
-const { existsSync, readdirSync } = require('node:fs');
+const { readdirSync } = require('node:fs');
 const { resolve } = require('node:path');
-const { loadEnvFile } = require('node:process');
+const { loadTestEnv, e2eCredentials } = require('./test-env.cjs');
 
 const apiRoot = resolve(__dirname, '..');
-const envFile = resolve(apiRoot, '../../.env.test');
-if (existsSync(envFile)) loadEnvFile(envFile);
-
-// Never fall back to the development/production DATABASE_URL.
-const url = new URL(process.env.TEST_DATABASE_URL || 'postgresql://invalid');
-if (
-  !['postgres:', 'postgresql:'].includes(url.protocol) ||
-  !['localhost', '127.0.0.1', '[::1]'].includes(url.hostname) ||
-  !/^\/[a-zA-Z0-9_]+_test$/.test(url.pathname) ||
-  // pg query parameters can override the URL host/database. Only schema is needed.
-  [...url.searchParams.keys()].some((key) => key !== 'schema')
-) {
-  throw new Error(
-    'TEST_DATABASE_URL must use loopback, a database ending in _test, and only the schema query parameter.',
-  );
-}
-process.env.DATABASE_URL = url.toString();
-process.env.JWT_SECRET ||=
-  'session-27-test-only-secret-never-use-in-production';
+loadTestEnv();
+if (process.argv.includes('--e2e')) e2eCredentials();
 process.env.NODE_ENV = 'test';
 
 function run(entry, args = []) {
@@ -48,6 +31,13 @@ if (process.argv.includes('--prepare')) {
     'tsconfig.prisma.json',
     'prisma/seed.ts',
   ]);
+  if (process.argv.includes('--e2e')) {
+    run(require.resolve('ts-node/dist/bin.js'), [
+      '--project',
+      'tsconfig.prisma.json',
+      'prisma/seed-e2e.ts',
+    ]);
+  }
 } else {
   run(require.resolve('@nestjs/cli/bin/nest.js'), ['build']);
   if (!process.argv.includes('--legacy')) {
