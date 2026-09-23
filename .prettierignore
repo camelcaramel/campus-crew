@@ -3,6 +3,12 @@ node_modules/
 **/out/
 **/dist/
 **/coverage/
+**/playwright-report/
+**/test-results/
 **/*.tsbuildinfo
 **/next-env.d.ts
 package-lock.json
+apps/api/generated/
+
+# Local environment files are edited by each developer, not the formatter.
+.env*

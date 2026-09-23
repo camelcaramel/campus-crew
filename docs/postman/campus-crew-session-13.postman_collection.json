@@ -1,0 +1,144 @@
+{
+  "info": {
+    "name": "Campus Crew — 13차시 REST API",
+    "description": "API 서버 실행 후 1~5번을 순서대로 실행합니다. baseUrl의 포트를 서버 설정에 맞추세요. 데이터는 서버 재시작 시 초기화됩니다.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. GET 모집글 목록",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/recruitments"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "const items = pm.response.json();",
+              "pm.test('JSON 배열', () => pm.expect(items).to.be.an('array'));",
+              "pm.collectionVariables.set('initialCount', items.length);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. GET id 1 상세",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/recruitments/1"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('id 1 객체', () => pm.expect(pm.response.json().id).to.equal(1));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. GET 존재하지 않는 id",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/recruitments/999999"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('404 Not Found', () => pm.response.to.have.status(404));",
+              "pm.test('404 JSON', () => pm.expect(pm.response.json().statusCode).to.equal(404));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. POST 모집글 생성",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/recruitments",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"React 스터디 팀원 모집\",\n  \"content\": \"주 1회 함께 공부할 팀원을 모집합니다.\",\n  \"category\": \"STUDY\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('201 Created', () => pm.response.to.have.status(201));",
+              "const created = pm.response.json();",
+              "pm.test('서버 id', () => pm.expect(created.id).to.be.a('number'));",
+              "pm.test('기본 OPEN', () => pm.expect(created.status).to.equal('OPEN'));",
+              "const sent = JSON.parse(pm.request.body.raw);",
+              "pm.test('요청 내용 반환', () => {",
+              "  pm.expect(created.title).to.equal(sent.title);",
+              "  pm.expect(created.content).to.equal(sent.content);",
+              "  pm.expect(created.category).to.equal(sent.category);",
+              "});",
+              "pm.collectionVariables.set('createdRecruitment', JSON.stringify(created));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. GET 생성 후 목록",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/recruitments"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "const items = pm.response.json();",
+              "const created = JSON.parse(pm.collectionVariables.get('createdRecruitment'));",
+              "pm.test('생성 객체가 목록에 포함', () => pm.expect(items.find(item => item.id === created.id)).to.deep.equal(created));",
+              "pm.test('목록이 1개 증가', () => pm.expect(items.length).to.equal(Number(pm.collectionVariables.get('initialCount')) + 1));"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

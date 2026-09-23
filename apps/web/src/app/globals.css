@@ -1,6 +1,32 @@
 @import 'tailwindcss';
 
+@theme {
+  --color-primary-600: #2563eb;
+  --color-neutral-900: #111827;
+  --color-neutral-500: #6b7280;
+  --color-neutral-200: #e5e7eb;
+  --color-white: #ffffff;
+}
+
 body {
-  background: #f8fafc;
+  margin: 0;
+  background: var(--color-white);
+  color: var(--color-neutral-900);
   font-family: Arial, 'Malgun Gothic', sans-serif;
+  line-height: 1.6;
+}
+
+h1 {
+  margin-bottom: 1rem;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+p {
+  color: var(--color-neutral-500);
+}
+
+a:focus-visible {
+  outline: 2px solid var(--color-primary-600);
+  outline-offset: 4px;
 }
