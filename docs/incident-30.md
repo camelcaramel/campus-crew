@@ -58,8 +58,8 @@ npm run build -w apps/web
 | 기존 이력 보존       | fa44bfd에서 별도 clone + fix/session-30-production-api-proxy, 4–29차시 원본 유지                                                        |
 | 선행 PR              | [#1 — 5–29차시 이력 반영](https://github.com/camelcaramel/campus-crew/pull/1), Actions 전체 quality 통과, merge commit `d45fa82`로 병합 |
 | 30차시 PR            | [#2 — production proxy 누락 방지](https://github.com/camelcaramel/campus-crew/pull/2) — 최신 CI/merge 상태는 PR 링크에서 확인           |
-| Hosted 배포          | Vercel/Render 대시보드 로그인 필요; 기존 배포 URL 미확인                                                                                |
-| Production smoke     | 미실행 — 로컬 결과로 대체하지 않음                                                                                                      |
+| Hosted 배포          | 사용자가 실제 배포 없음 확인; 이번 범위를 코드·PR·CI까지로 확정                                                                         |
+| Production smoke     | 미실행 — 실제 배포 없음; 로컬 결과로 대체하지 않음                                                                                      |
 | v1.0.0 tag / Release | 생성·push하지 않음; hosted smoke 통과 후 tag 별도 승인 필요                                                                             |
 
 ### Hosted smoke 체크리스트

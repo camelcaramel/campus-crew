@@ -85,3 +85,5 @@ Files: `apps/web/e2e/recruitment-smoke.spec.ts` (actual existing filename verifi
 - Hosted gate remains open: both dashboards require login, no web/API URL confirmed. No production data modified. No tag or release created.
 
 - Final independent review: no consequential blocker; config tests independently passed 12/12. Accepted wording correction: rewrites validation protects build, while production start reads the existing routes manifest. Adjusted diagnostic/docs, no extra runtime mechanism.
+
+- User scope update: no existing hosted deployment; finish code/PR/CI only. Preserve previously authorized CI-gated merge. Hosted deploy/smoke deferred, not an unresolved login request; no tag/release.
