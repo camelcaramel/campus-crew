@@ -30,9 +30,9 @@
 
 Files: `apps/web/next.config.ts`, `apps/web/test/deployment-config.test.mjs`.
 
-- [ ] Install unchanged lockfile dependencies and run baseline web tests.
-- [ ] With no API_BASE_URL/API_ORIGIN/VERCEL, build the original web, start it on localhost with no API on 4000, GET `/api/recruitments?limit=1`, and record HTTP 500 plus connection-refused logs. Only GET requests; no DB needed.
-- [ ] Add failing tests against the real transpiled Next config:
+- [x] Install unchanged lockfile dependencies and run baseline web tests.
+- [x] With no API_BASE_URL/API_ORIGIN/VERCEL, build the original web, start it on localhost with no API on 4000, GET `/api/recruitments?limit=1`, and record HTTP 500 plus connection-refused logs. Only GET requests; no DB needed.
+- [x] Add failing tests against the real transpiled Next config:
 
 ```js
 await assert.rejects(destination({ NODE_ENV: 'production' }), /API_BASE_URL/);
@@ -49,19 +49,19 @@ assert.equal(
 );
 ```
 
-- [ ] Run `node --test apps/web/test/deployment-config.test.mjs`; confirm the missing-setting rejection tests fail on baseline.
-- [ ] Extend the existing missing-setting condition to `(process.env.VERCEL || process.env.NODE_ENV === 'production') && !process.env.API_BASE_URL`; use a value-free diagnostic naming API_BASE_URL. Keep all other rewrite behavior.
-- [ ] Re-run tests; missing-env production build must now exit nonzero with the diagnostic; explicit local URL build must succeed.
+- [x] Run `node --test apps/web/test/deployment-config.test.mjs`; confirm the missing-setting rejection tests fail on baseline.
+- [x] Extend the existing missing-setting condition to `(process.env.VERCEL || process.env.NODE_ENV === 'production') && !process.env.API_BASE_URL`; use a value-free diagnostic naming API_BASE_URL. Keep all other rewrite behavior.
+- [x] Re-run tests; missing-env production build must now exit nonzero with the diagnostic; explicit local URL build must succeed.
 
 ## Task 2: Verify recovery and document the incident
 
 Files: `apps/web/e2e/recruitment-smoke.spec.ts` (actual existing filename verified before edit), `docs/incident-30.md`, `README.md`.
 
-- [ ] Extend the existing browser smoke with explicit login/me/list/detail status assertions and logout → me 401. Preserve existing UI checks; use existing local test fixtures, no new production fixture creation.
-- [ ] Use a dedicated local `campus_crew_session30_test` database; only the existing guarded test prepare/fixture scripts may write to it.
-- [ ] Run `npm run format:check`, `npm run lint`, `npm test`, `npm run build`, `npm run test:e2e`; inspect results and resolve failures without skips.
-- [ ] Write `docs/incident-30.md` with title, symptom, impact, reproduction, root cause, fix, verification, prevention, 50-minute lesson flow, deployment and release gates. Add one truthful README status line.
-- [ ] Self-review diff, confirm original commits remain ancestors, then commit `fix: require explicit production api proxy configuration`.
+- [x] Extend the existing browser smoke with explicit login/me/list/detail status assertions and logout → me 401. Preserve existing UI checks; use existing local test fixtures, no new production fixture creation.
+- [x] Use a dedicated local `campus_crew_session30_test` database; only the existing guarded test prepare/fixture scripts may write to it.
+- [x] Run `npm run format:check`, `npm run lint`, `npm test`, `npm run build`, `npm run test:e2e`; inspect results and resolve failures without skips.
+- [x] Write `docs/incident-30.md` with title, symptom, impact, reproduction, root cause, fix, verification, prevention, 50-minute lesson flow, deployment and release gates. Add one truthful README status line.
+- [x] Self-review diff, confirm original commits remain ancestors, then commit `fix: require explicit production api proxy configuration`.
 
 ## Task 3: GitHub delivery and hosted verification
 
@@ -83,3 +83,5 @@ Files: `apps/web/e2e/recruitment-smoke.spec.ts` (actual existing filename verifi
 - Baseline PR #1 CI quality passed all required stages; independent bounded review found no high-impact blocker; merged with preserved original history at d45fa82.
 - Ruling: baseline PR finished before fix PR creation, so fix PR can target main directly, avoiding unnecessary retargeting. Final diff remains only session-30 changes.
 - Hosted gate remains open: both dashboards require login, no web/API URL confirmed. No production data modified. No tag or release created.
+
+- Final independent review: no consequential blocker; config tests independently passed 12/12. Accepted wording correction: rewrites validation protects build, while production start reads the existing routes manifest. Adjusted diagnostic/docs, no extra runtime mechanism.

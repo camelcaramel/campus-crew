@@ -26,13 +26,13 @@ node node_modules/next/dist/bin/next start apps/web --hostname 127.0.0.1 --port 
 
 ## Root cause
 
-29차시 검사는 `process.env.VERCEL`이 있을 때만 `API_BASE_URL` 누락을 거부했다. `VERCEL` 없이 실행한 production build는 개발용 `http://localhost:4000` fallback을 사용했다. 이 목적지는 build 결과에 들어간다. Vercel 시스템 변수를 노출하지 않는 설정에서도 기존 검사에만 의존하면 같은 누락을 놓칠 수 있다.
+29차시 검사는 `process.env.VERCEL`이 있을 때만 `API_BASE_URL` 누락을 거부했다. `VERCEL` 없이 실행한 production build는 개발용 `http://localhost:4000` fallback을 사용했다. 이 목적지는 build 결과에 들어간다. `next start`는 생성된 routes manifest를 사용하므로 시작할 때 환경변수만 바꿔도 목적지가 바뀌는 것은 아니다. Vercel 시스템 변수를 노출하지 않는 설정에서도 기존 검사에만 의존하면 같은 누락을 놓칠 수 있다.
 
 확인한 경계는 Browser → Next rewrite → 존재하지 않는 local API이다. Render/Neon까지 요청이 도달한 증거는 없으며, 이 실습에서 hosted 로그를 관찰했다고 주장하지 않는다.
 
 ## Fix
 
-기존 누락 검사 조건에 `NODE_ENV === 'production'`을 추가했다. 이제 VERCEL 유무와 무관하게 production build/start에는 명시적인 `API_BASE_URL`이 필요하다. 개발 모드의 기본값/과거 `API_ORIGIN`, 기존 Vercel HTTPS/origin 검사, `/api/*` rewrite, 인증 코드는 유지한다.
+기존 누락 검사 조건에 `NODE_ENV === 'production'`을 추가했다. 이제 VERCEL 유무와 무관하게 production build에는 명시적인 `API_BASE_URL`이 필요하다. 개발 모드의 기본값/과거 `API_ORIGIN`, 기존 Vercel HTTPS/origin 검사, `/api/*` rewrite, 인증 코드는 유지한다.
 
 로컬 복구는 명시적인 local API 주소와 격리된 `_test` DB를 사용해 API/Web을 다시 빌드·실행한다. hosted 복구는 Vercel **Production 환경의 API_BASE_URL을 실제 Render origin으로 설정한 뒤 재빌드/재배포**한다. 환경변수만 저장하고 이전 배포를 그대로 두면 완료가 아니다. Render API 코드나 schema를 바꾸지 않았으므로 이 수정 자체로 Render redeploy/migration은 필요하지 않다.
 
@@ -41,7 +41,7 @@ $env:API_BASE_URL = 'http://127.0.0.1:4000' # 로컬 실습 전용
 npm run build -w apps/web
 ```
 
-예상되는 실패 방지: API_BASE_URL을 제거한 수정 버전의 build는 exit 1과 `Set server-only API_BASE_URL before building or starting production.`으로 중단된다. 실습을 위해 이 검사를 제거하거나 CI를 skip하지 않는다.
+예상되는 실패 방지: API_BASE_URL을 제거한 수정 버전의 build는 exit 1과 `Set server-only API_BASE_URL before building production.`으로 중단된다. 실습을 위해 이 검사를 제거하거나 CI를 skip하지 않는다.
 
 ## Verification
 
@@ -57,7 +57,7 @@ npm run build -w apps/web
 | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
 | 기존 이력 보존       | fa44bfd에서 별도 clone + fix/session-30-production-api-proxy, 4–29차시 원본 유지                                                        |
 | 선행 PR              | [#1 — 5–29차시 이력 반영](https://github.com/camelcaramel/campus-crew/pull/1), Actions 전체 quality 통과, merge commit `d45fa82`로 병합 |
-| 30차시 PR            | 로컬 검증 후 생성                                                                                                                       |
+| 30차시 PR            | [#2 — production proxy 누락 방지](https://github.com/camelcaramel/campus-crew/pull/2) — 최신 CI/merge 상태는 PR 링크에서 확인           |
 | Hosted 배포          | Vercel/Render 대시보드 로그인 필요; 기존 배포 URL 미확인                                                                                |
 | Production smoke     | 미실행 — 로컬 결과로 대체하지 않음                                                                                                      |
 | v1.0.0 tag / Release | 생성·push하지 않음; hosted smoke 통과 후 tag 별도 승인 필요                                                                             |

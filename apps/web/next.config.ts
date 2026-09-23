@@ -10,7 +10,7 @@ const nextConfig: NextConfig = {
       !process.env.API_BASE_URL
     ) {
       throw new Error(
-        'Set server-only API_BASE_URL before building or starting production.',
+        'Set server-only API_BASE_URL before building production.',
       );
     }
     let backend: URL;
