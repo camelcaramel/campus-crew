@@ -421,3 +421,7 @@ API 시작 전 `apps/api/.env`에 실제 무작위 `JWT_SECRET`을 설정하세�
 ## 28차시: Playwright Smoke Test + CI
 
 [28차시 실행 및 수업 안내](docs/session-28-playwright-ci.md)를 참고하세요. 별도 테스트 DB와 `.env.test`를 준비한 뒤 `npm run test:e2e:prepare`, `npm run build`, `npm run test:e2e` 순서로 실제 로그인 → 목록 → 상세를 검증합니다. build에 필요한 `DATABASE_URL`과 `API_ORIGIN` 설정은 안내 문서에 있습니다. GitHub Actions는 PR/main push마다 format, lint, API/web test, build, Chromium smoke를 실행합니다.
+
+## 29차시: Neon + Render + Vercel 배포
+
+[배포 체크리스트](docs/deployment.md) 순서대로 **Neon DB → Render API → Vercel Web → 실제 브라우저 smoke**를 진행합니다. production migration은 `npm run db:migrate:deploy`이며 seed는 자동 실행하지 않습니다. Next same-origin `/api/*` rewrite는 server-only `API_BASE_URL`을 사용합니다. 계획과 검증 기록은 [29차시 구현 계획](docs/superpowers/plans/2026-09-23-campus-crew-session-29-production-deploy.md)에 있습니다. 저장소 준비와 실제 계정 배포 상태는 배포 문서의 기록표에서 구분합니다.
