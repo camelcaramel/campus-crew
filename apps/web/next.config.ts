@@ -5,9 +5,12 @@ const nextConfig: NextConfig = {
   agentRules: false,
   async rewrites() {
     // Vercel embeds this destination at build time. Redeploy after env changes.
-    if (process.env.VERCEL && !process.env.API_BASE_URL) {
+    if (
+      (process.env.VERCEL || process.env.NODE_ENV === 'production') &&
+      !process.env.API_BASE_URL
+    ) {
       throw new Error(
-        'Set server-only API_BASE_URL before deploying to Vercel.',
+        'Set server-only API_BASE_URL before building production.',
       );
     }
     let backend: URL;

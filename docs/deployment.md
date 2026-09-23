@@ -166,7 +166,7 @@ Render API origin을 확보한 뒤에만 다음 단계로 이동합니다. API�
 ```
 
 - build-time 설정입니다. 빌드 결과 `.next/routes-manifest.json`에 목적지가 들어갑니다. 환경변수만 바꾸고 기존 배포를 그대로 두면 목적지가 바뀌지 않습니다.
-- 로컬 우선순위: `API_BASE_URL` → 과거 차시의 `API_ORIGIN` → `http://localhost:4000`.
+- 개발 모드 우선순위: `API_BASE_URL` → 과거 차시의 `API_ORIGIN` → `http://localhost:4000`. 30차시부터 로컬을 포함한 production build는 명시적인 `API_BASE_URL`이 필수입니다. [장애 재현·복구 기록](incident-30.md)을 참고하세요.
 - Vercel에서는 `API_BASE_URL` 누락 시 빌드를 실패시킵니다. HTTPS가 아니거나 명백한 loopback 주소, credentials/query/path가 들어간 origin도 거부합니다.
 - browser Network의 요청 대상은 Vercel `/api/*`입니다. 별도 redirect나 브라우저의 Render 직접 호출이 아닙니다. origin은 브라우저 비밀값으로 간주하지 않지만 client 환경변수로 공급할 필요가 없습니다.
 - 기존 Nest 쿠키에는 Domain이 없습니다. 프록시 응답의 쿠키는 사용자가 요청한 Vercel host에 저장되어야 합니다. Route Handler proxy는 추가하지 않았으며 Set-Cookie forwarding은 smoke로 검증합니다.

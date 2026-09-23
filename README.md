@@ -1,5 +1,7 @@
 # Campus Crew
 
+30차시 v1.0 준비: production API proxy 설정 누락 방지와 운영 실습은 [incident 기록](docs/incident-30.md)을 참고하세요. 실제 hosted smoke와 v1.0 tag는 검증 완료 전까지 보류합니다.
+
 ## 20차시: 모집글 수정·삭제 mutation
 
 공통 RecruitmentForm을 create/edit 화면에서 재사용하고, 실제 PATCH와 DELETE를 useMutation으로 연결합니다. 성공 후 목록·상세 캐시를 갱신하며 삭제 전 confirm과 pending/error UI를 제공합니다.

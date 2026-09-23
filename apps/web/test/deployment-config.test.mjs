@@ -44,6 +44,30 @@ test('Vercel requires API_BASE_URL rather than silently deploying localhost', as
   );
 });
 
+test('production without VERCEL refuses a missing API_BASE_URL before deployment', async () => {
+  await assert.rejects(destination({ NODE_ENV: 'production' }), /API_BASE_URL/);
+});
+
+test('production cannot hide missing API_BASE_URL behind legacy API_ORIGIN', async () => {
+  await assert.rejects(
+    destination({
+      NODE_ENV: 'production',
+      API_ORIGIN: 'http://localhost:4000',
+    }),
+    /API_BASE_URL/,
+  );
+});
+
+test('an explicit backend supports local production smoke without VERCEL', async () => {
+  assert.equal(
+    await destination({
+      NODE_ENV: 'production',
+      API_BASE_URL: 'http://127.0.0.1:4000',
+    }),
+    'http://127.0.0.1:4000/api/:path*',
+  );
+});
+
 for (const origin of [
   'http://campus-crew-api.onrender.com',
   'https://localhost:4000',
