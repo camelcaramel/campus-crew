@@ -12,7 +12,6 @@ import {
   Patch,
   Post,
   Query,
-  ValidationPipe,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -39,10 +38,7 @@ export class RecruitmentsController {
   @ApiOkResponse({
     description: 'items와 meta(page, limit, total, totalPages)',
   })
-  findAll(
-    @Query(new ValidationPipe({ transform: true }))
-    query: RecruitmentListQueryDto,
-  ) {
+  findAll(@Query() query: RecruitmentListQueryDto) {
     return this.recruitmentsService.findAll(query);
   }
 

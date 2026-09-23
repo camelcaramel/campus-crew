@@ -8,12 +8,15 @@
     "prebuild": "prisma generate",
     "build": "nest build",
     "start": "node dist/src/main.js",
-    "test:e2e": "node --test --test-concurrency=1 test/*.e2e.mjs",
+    "test:e2e": "node test/run-tests.cjs --all",
     "lint": "eslint . --max-warnings 0",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:seed": "prisma db seed",
-    "db:typecheck": "tsc --project tsconfig.prisma.json"
+    "db:typecheck": "tsc --project tsconfig.prisma.json",
+    "test": "node test/run-tests.cjs",
+    "test:legacy": "node test/run-tests.cjs --legacy",
+    "test:prepare": "node test/run-tests.cjs --prepare"
   },
   "dependencies": {
     "@nestjs/common": "11.2.3",
@@ -37,7 +40,9 @@
     "@types/cookie-parser": "1.4.10",
     "@types/express": "5.0.6",
     "@types/pg": "8.23.1",
+    "jest": "30.2.0",
     "prisma": "7.10.0",
+    "supertest": "7.1.4",
     "ts-node": "10.9.2"
   }
 }

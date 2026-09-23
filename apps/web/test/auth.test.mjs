@@ -29,6 +29,21 @@ function load(name) {
   return compiledModule.exports;
 }
 const api = load('api');
+test('login shows the server validation message', async (t) => {
+  t.mock.method(globalThis, 'fetch', async () =>
+    Response.json(
+      {
+        statusCode: 400,
+        code: 'VALIDATION_ERROR',
+        message: '입력값을 확인해주세요.',
+      },
+      { status: 400 },
+    ),
+  );
+  await assert.rejects(api.login({ email: 'bad', password: 'short' }), {
+    message: '입력값을 확인해주세요.',
+  });
+});
 test('login does not reject international or quoted emails allowed at signup', () => {
   const { loginSchema } = load('schema');
   for (const email of ['학생@example.com', '"student name"@example.com']) {

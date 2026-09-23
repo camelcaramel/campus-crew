@@ -51,7 +51,10 @@ export class RecruitmentsService {
       include: authorInclude,
     });
     if (!recruitment) {
-      throw new NotFoundException('모집글을 찾을 수 없습니다.');
+      throw new NotFoundException({
+        code: 'RECRUITMENT_NOT_FOUND',
+        message: '모집글을 찾을 수 없습니다.',
+      });
     }
     return recruitment;
   }
@@ -100,7 +103,10 @@ export class RecruitmentsService {
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2025'
       ) {
-        throw new NotFoundException('모집글을 찾을 수 없습니다.');
+        throw new NotFoundException({
+          code: 'RECRUITMENT_NOT_FOUND',
+          message: '모집글을 찾을 수 없습니다.',
+        });
       }
       throw error;
     }
@@ -115,7 +121,10 @@ export class RecruitmentsService {
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2025'
       ) {
-        throw new NotFoundException('모집글을 찾을 수 없습니다.');
+        throw new NotFoundException({
+          code: 'RECRUITMENT_NOT_FOUND',
+          message: '모집글을 찾을 수 없습니다.',
+        });
       }
       throw error;
     }

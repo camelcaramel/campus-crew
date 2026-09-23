@@ -132,7 +132,7 @@ export class ApplicationsService {
           await this.requireRecruitment(recruitmentId);
           throw new UnauthorizedException({
             statusCode: 401,
-            code: 'AUTH_USER_NOT_FOUND',
+            code: 'AUTH_REQUIRED',
             message: '다시 로그인해주세요.',
           });
         }

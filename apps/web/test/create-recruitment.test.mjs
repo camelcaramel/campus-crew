@@ -63,9 +63,11 @@ before(async () => {
       response.end('{}');
       return;
     }
-    if (payload.title === 'bad-author') {
+    if (payload.title === 'validation-error') {
       response.writeHead(400, { 'Content-Type': 'application/json' });
-      response.end('{"message":"존재하는 사용자의 authorId를 입력하세요."}');
+      response.end(
+        '{"statusCode":400,"code":"VALIDATION_ERROR","message":"입력값을 확인해주세요."}',
+      );
       return;
     }
     if (payload.title === 'invalid-json') {
@@ -113,7 +115,7 @@ test('form values become a JSON POST without a client author and return the serv
   );
 });
 
-for (const title of ['http-error', 'bad-author', 'network-error']) {
+for (const title of ['http-error', 'network-error']) {
   test(title + ' rejects with a user-facing create error', async () => {
     assert.equal(typeof createRecruitment, 'function', 'Create API must exist');
     await assert.rejects(createRecruitment({ ...input, title }), {
@@ -121,6 +123,15 @@ for (const title of ['http-error', 'bad-author', 'network-error']) {
     });
   });
 }
+
+test('create preserves server validation message for the form', async () => {
+  await assert.rejects(
+    createRecruitment({ ...input, title: 'validation-error' }),
+    {
+      message: '입력값을 확인해주세요.',
+    },
+  );
+});
 
 test('malformed success JSON rejects instead of pretending creation succeeded', async () => {
   assert.equal(typeof createRecruitment, 'function', 'Create API must exist');

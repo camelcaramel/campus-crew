@@ -9,6 +9,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import { AUTH_COOKIE_NAME } from './modules/auth/auth-cookie';
 import { AppModule } from './app.module';
+import { ApiExceptionFilter } from './common/api-exception.filter';
 
 async function bootstrap() {
   // src/main.ts와 dist/src/main.js에서 모두 같은 API/저장소 .env를 찾습니다.
@@ -53,7 +54,18 @@ async function bootstrap() {
       next(error);
     },
   );
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+      exceptionFactory: () =>
+        new BadRequestException({
+          code: 'VALIDATION_ERROR',
+          message: '입력값을 확인해주세요.',
+        }),
+    }),
+  );
+  app.useGlobalFilters(new ApiExceptionFilter());
 
   const config = new DocumentBuilder()
     .setTitle('Campus Crew API')

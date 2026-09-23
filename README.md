@@ -404,3 +404,16 @@ API 시작 전 `apps/api/.env`에 실제 무작위 `JWT_SECRET`을 설정하세�
 - [23차시 구현 계획](docs/superpowers/plans/2026-09-19-campus-crew-session-23-auth-guard-owner-authorization.md)
 - [23차시 Postman 컬렉션](docs/postman/campus-crew-session-23.postman_collection.json)
 - 다음 24차시에는 Guard와 CurrentUser를 Application 지원/취소에 재사용합니다.
+
+## 27차시 — DTO 검증과 API 테스트
+
+전역 ValidationPipe와 `{ statusCode, code, message }` 에러 응답을 적용했습니다.
+7개 입력 DTO를 재사용하고 Jest + Supertest로 실제 Nest/PostgreSQL 동작을 검증합니다.
+기존 API 회귀 테스트도 함께 유지합니다.
+
+- [27차시 구현·DTO 규칙·에러 코드·테스트 DB·수동 검증](docs/session-27-validation-error-api-tests.md)
+- [27차시 구현 계획과 실행 기록](docs/superpowers/plans/2026-09-23-campus-crew-session-27-validation-error-api-tests.md)
+- `.env.test.example`을 `.env.test`로 복사하고 별도 로컬 `_test` DB를 준비합니다.
+- `npm run test:prepare -w apps/api` → `npm test -w apps/api`
+- 전체 API 회귀 검증: `npm run test:e2e -w apps/api`
+- 다음 28차시에는 Playwright smoke와 GitHub Actions PR gate를 연결합니다.

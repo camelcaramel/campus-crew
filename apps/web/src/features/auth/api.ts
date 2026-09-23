@@ -12,10 +12,19 @@ export async function login(values: LoginValues): Promise<AuthResponse> {
     body: JSON.stringify(values),
   });
   if (!response.ok) {
+    const data: unknown = await response.json().catch(() => null);
+    const message =
+      data !== null &&
+      typeof data === 'object' &&
+      'message' in data &&
+      typeof data.message === 'string' &&
+      data.message.trim()
+        ? data.message
+        : '로그인하지 못했습니다. 잠시 후 다시 시도해주세요.';
     throw new Error(
       response.status === 401
         ? '이메일 또는 비밀번호를 확인해주세요.'
-        : '로그인하지 못했습니다. 잠시 후 다시 시도해주세요.',
+        : message,
     );
   }
   return response.json() as Promise<AuthResponse>;

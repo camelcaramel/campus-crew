@@ -323,14 +323,14 @@ test('PATCH는 허용 필드만 수정하며 생략한 내용과 작성자를 �
   assert.equal(updated.authorId, author.id);
   assert.deepEqual(updated.author, row.author);
   const second = await request('PATCH', '/api/recruitments/' + row.id, {
-    content: '내용 수정',
+    content: '수정된 모집글의 상세 내용입니다.',
     category: 'PROJECT',
   });
   assert.equal(second.status, 200);
   const data = await (
     await request('GET', '/api/recruitments/' + row.id)
   ).json();
-  assert.equal(data.content, '내용 수정');
+  assert.equal(data.content, '수정된 모집글의 상세 내용입니다.');
   assert.equal(data.category, 'PROJECT');
   assert.equal(data.status, 'CLOSED');
   const unchanged = await request('PATCH', '/api/recruitments/' + row.id, {});
