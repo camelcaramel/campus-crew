@@ -87,7 +87,7 @@ node -e "console.log(require('node:crypto').randomBytes(48).toString('hex'))"
 
 `features/auth/queries.ts`의 `authMeKey = ['auth', 'me']`와 `useMeQuery()`가 Header를 구동합니다. `useLoginMutation()` 성공 시 진행 중인 me 요청을 취소하고 공개 user를 캐시에 저장합니다. 폼은 성공 후 `/recruitments`로 이동합니다. `useLogoutMutation()`은 서버의 Cookie 제거가 성공하면 진행 중인 me 요청을 취소하고 캐시를 null로 바꿉니다. queryFn은 AbortSignal을 fetch로 넘겨 오래된 응답이 새 인증 상태를 덮어쓰지 않도록 합니다.
 
-`LoginForm`은 기존 RHF + Zod 패턴을 사용하며 label, 필드 오류, 일반적인 서버 오류, pending 버튼을 제공합니다. Header는 초기 확인 중/로그인/비로그인/조회 실패 재시도를 구분합니다. 회원가입 화면은 기존대로 후속 UI 범위로 남겨두었습니다.
+`LoginForm`은 기존 RHF + Zod 패턴을 사용하며 label, 필드 오류, 일반적인 서버 오류, pending 버튼을 제공합니다. Header는 초기 확인 중/로그인/비로그인/조회 실패 재시도를 구분합니다. 원래 22차시에는 회원가입 화면을 후속 범위로 남겨두었지만, 현재 통합본에는 [21차시 화면 보완](session-21-signup-ui.md)이 반영되어 로그인 화면에서도 회원가입으로 이동할 수 있습니다.
 
 ## 실행 및 학생 검증
 

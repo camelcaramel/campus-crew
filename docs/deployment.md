@@ -4,10 +4,10 @@
 
 ## 0. 현재 상태와 배포 전 준비
 
-- 작업 브랜치: `chore/session-29-production-deploy`. 4~28차시 커밋과 migration/seed는 보존했습니다.
-- 현재 task에서 확인한 원격에는 28차시 `dc0b061` ref가 없습니다. GitHub Actions 실행 결과가 없으므로 **CI green 미확인**입니다. 이전 차시 로컬 테스트 통과와 원격 CI green은 다릅니다.
-- Neon 브라우저는 로그인 화면이며 실제 계정/project 권한은 확보되지 않았습니다. 이 문서의 설정은 저장소 준비 결과이며 실제 서비스 생성이나 hosted smoke 성공을 뜻하지 않습니다.
-- 실제 web/API URL, Neon migration 결과, Render/Vercel 로그는 배포 후 아래 기록표에 남깁니다. connection string, 비밀번호, JWT, Set-Cookie 원문, 토큰은 기록하지 않습니다.
+- 2026-09-24 실제 production 배포 완료. 원본 4~30차시 작업은 보존하고 독립 checkout의 `chore/finalize-production-deployment` 브랜치에서 문서를 갱신했습니다.
+- 배포 소스는 `main`의 `0cd7a388114734614e6dac6b45c7a6be650a05e2`이며 [GitHub Actions CI 성공](https://github.com/camelcaramel/campus-crew/actions/runs/35868097477)을 확인했습니다.
+- [학생용 Web](https://campus-crew-web.vercel.app), [Render API 목록](https://campus-crew-api.onrender.com/api/recruitments?limit=1), [실제 설정 스크린샷 안내](https://app.notion.com/p/3e5c9251793c81f5901ac6f6c188cbc0).
+- Neon migration, Render Live, Vercel Ready, 실제 HTTPS cookie와 production smoke를 확인했습니다. 연결 문자열, 비밀번호, JWT, Set-Cookie 원문은 기록하지 않습니다.
 
 ### 학생 체크리스트
 
@@ -53,7 +53,7 @@ CI:    Next :3000 → Nest :4000 → disposable PostgreSQL 17 service
 
 현재 Prisma 7 구성은 `apps/api/prisma.config.ts`의 `datasource.url`과 `PrismaPg` 모두 `DATABASE_URL`을 사용합니다. schema의 datasource에는 URL을 추가하지 않습니다. Nest는 TCP 기반 `@prisma/adapter-pg`를 사용하며 별도 Neon adapter 업그레이드가 필요하지 않습니다.
 
-**Pooled/direct 결정:** Neon은 Prisma migration의 pooled 연결 지원을 공지했습니다. 한편 현재 Prisma 가이드는 CLI에 direct URL을 사용하는 예시도 제공합니다. 이 프로젝트에서는 불필요한 두 번째 변수를 추가하지 않고 pooled URL부터 확인합니다. 실제 Neon 계정 연결 전이므로 이 특정 Prisma 7.10 + Neon project에서 migration이 검증됐다는 뜻은 아닙니다. pooled migration 오류가 실제 재현되면 원인을 먼저 확인하고, Console의 Connection pooling을 끈 **동일 branch/database/role**의 direct URL을 migration 터미널의 `DATABASE_URL`에만 임시 지정합니다. 실행 후 제거하고 Render API의 URL은 pooled로 유지합니다. 영구적인 CLI 분리가 정말 필요한 경우에만 `DIRECT_DATABASE_URL`과 Prisma config 변경을 별도 검증합니다. SSL 검증을 끄거나 DB를 reset하지 않습니다.
+**Pooled/direct 결정:** 2026-09-24 Prisma 7.10과 실제 Neon production DB에서 pooled URL로 `prisma migrate deploy`가 성공했습니다. `_prisma_migrations`의 완료 상태도 확인했습니다. 따라서 `DIRECT_DATABASE_URL`은 추가하지 않았습니다. 다른 환경에서 pooled migration 오류가 실제 재현되면 원인을 확인하고 동일 branch/database/role의 direct URL을 migration 셸의 `DATABASE_URL`에만 임시 지정합니다. API는 pooled 연결을 유지하며 SSL 검증을 끄거나 DB를 reset하지 않습니다.
 
 ### 최초 및 schema 변경 배포마다 수동 실행
 
@@ -87,7 +87,7 @@ try {
 
 ## 3. Render NestJS API
 
-[Render Dashboard](https://dashboard.render.com) → **New + → Web Service → Git Provider → GitHub 저장소 Connect**. GitHub 연결 권한이 없다면 사용자 계정에서 연결합니다.
+[Render Dashboard](https://dashboard.render.com) → **New + → Web Service**. 이번 공개 저장소는 **Public Git Repository**에 `https://github.com/camelcaramel/campus-crew`를 입력했습니다. 비공개 저장소라면 Git Provider에서 GitHub 저장소 접근 권한을 연결합니다. 서비스는 `campus-crew-api`, Singapore, Free입니다.
 
 | 설정               | 이 저장소의 값                                      |
 | ------------------ | --------------------------------------------------- |
@@ -122,7 +122,7 @@ repo의 Node 범위가 선택되므로 `NODE_VERSION`은 필수 변수가 아닙
 
 ### Migration과 배포 시점
 
-- 계정 플랜을 아직 확인하지 않았으므로 **수동 migration을 기본**으로 정합니다. 위 2단계 성공 → Render **Deploy Web Service** 또는 **Manual Deploy → Deploy latest commit** 순서입니다. 이후 schema 변경도 동일합니다. Auto Deploy를 끄면 migration 전에 코드가 자동으로 시작되는 일을 막을 수 있습니다.
+- 현재 **Free 플랜은 pre-deploy를 제공하지 않아 수동 migration**을 사용합니다. 위 2단계 성공 → Render **Deploy Web Service** 또는 **Manual Deploy → Deploy latest commit** 순서입니다. 이후 schema 변경도 동일합니다. Auto Deploy는 Off입니다.
 - 현재 Render 문서상 pre-deploy는 paid web service에서 제공합니다. 실제 계정에 해당 기능이 있는 경우 **Settings → Build & Deploy → Pre-Deploy Command**에 `npm run db:migrate:deploy`를 설정할 수 있습니다. 성공 후에만 start가 진행됩니다. 최초 Neon migration을 생략하지 않고 이후 배포에 적용합니다.
 - migration을 build나 start에 몰래 끼워 넣지 않습니다. production seed도 연결하지 않습니다.
 - Free instance를 사용하면 idle 이후 cold start가 발생할 수 있습니다. 수업 데모와 실제 운영 가용성은 구분하며, 임의로 유료 플랜을 선택하지 않습니다.
@@ -175,7 +175,7 @@ Render API origin을 확보한 뒤에만 다음 단계로 이동합니다. API�
 
 **Vercel production URL**을 사용하고 DevTools → Network / Application → Cookies를 엽니다. 쿠키 **값**을 복사하거나 전체 HAR/trace를 공유하지 말고 이름·옵션·상태 코드만 기록합니다. 기존 session-28 Playwright는 로컬 서버와 테스트 DB를 기동하므로 hosted 검증을 대신하지 않습니다.
 
-현재 저장소에는 회원가입 **API만** 있고 `/signup` 페이지는 없습니다. Postman에서 **Vercel origin의** `POST /api/auth/signup`으로 계정 A/B를 각각 만듭니다. Body → raw → JSON에 `name`(예: `29차시 smoke A`, 2~~20자), 고유 `email`, 별도 데모 `password`(8~~50자, UTF-8 최대 72바이트)를 보냅니다. 실제 비밀번호는 개인 로컬 secret 변수로 입력하고 컬렉션에 저장하거나 공유하지 않습니다. 응답 201을 확인한 뒤 `/login` 화면에서 로그인합니다. API origin을 Render로 바꾸지 않습니다.
+21차시 화면 보완 이후에는 **Vercel의 `/signup` 화면**에서 이름·이메일·비밀번호·비밀번호 확인을 입력해 계정 A/B를 만듭니다. 가입 201과 완료 안내를 확인한 뒤 `/login`으로 이동해 로그인합니다. 가입 자체는 JWT나 Cookie를 만들지 않습니다. Postman의 `POST /api/auth/signup`도 계속 사용할 수 있습니다. 비밀번호와 Cookie 값은 로그·강의노트에 기록하지 않으며 API origin을 Render로 바꾸지 않습니다.
 
 | 순서 | 행동                                                               | 기대 결과                                                                   |
 | ---- | ------------------------------------------------------------------ | --------------------------------------------------------------------------- |
@@ -217,17 +217,21 @@ FROM _prisma_migrations ORDER BY started_at;
 - 지원 취소 후 해당 application 행이 사라지는 것은 정상입니다. 필요하면 취소 전후를 각각 확인합니다.
 - smoke 데이터를 남기면 테스트용 계정 A/B와 해당 recruitment ID를 기록합니다. 정리는 B의 지원 취소 후 A가 **본인이 방금 만든 smoke 글만** 삭제합니다. 다른 사용자 글이나 전체 테이블을 지우지 않습니다. 계정 삭제 UI는 없으므로 데모 계정은 테스트 표시한 채 남기고 임의의 SQL 대량 삭제는 하지 않습니다.
 
-### 배포 기록표 (실제 실행 후 작성)
+### 배포 기록표 (2026-09-24 실제 실행)
 
-| 항목                            | 현재 기록                                   |
-| ------------------------------- | ------------------------------------------- |
-| GitHub CI / 배포 SHA            | 원격 session-28 ref 미등록; CI green 미확인 |
-| Neon project/branch/DB          | 계정 로그인 필요, 미생성                    |
-| Neon migration                  | 미실행 (로컬 테스트 DB 검증과 구분)         |
-| Render API URL / plan / deploy  | 미생성; dashboard 설정 필요                 |
-| Vercel Web URL / deploy         | 미생성; Render 완료 후 진행                 |
-| HTTPS cookie / production smoke | 미실행                                      |
-| production 테스트 데이터        | 생성하지 않음                               |
+| 항목                            | 현재 기록                                                                                                          |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| GitHub CI / 배포 SHA            | CI success / `0cd7a38`                                                                                             |
+| Neon project/branch/DB          | `campus-crew-production` (`dry-river-47252168`) / `production` / `neondb`, AWS Singapore Free                      |
+| Neon migration                  | pooled 연결로 `20260919105521_init` 적용 완료, rollback 없음                                                       |
+| Render API URL / plan / deploy  | https://campus-crew-api.onrender.com / Free / `dep-daqhu417lnhs73d2nte0`, Live                                     |
+| Vercel Web URL / deploy         | https://campus-crew-web.vercel.app / `dpl_6YcNfQpBYouc8Dph25UYWsBAQX3h`, Ready                                     |
+| HTTPS cookie / production smoke | Secure, HttpOnly, SameSite=Lax, Vercel host / 로그인·새로고침 me 200·로그아웃 me 401·작성·목록·상세·지원·승인 확인 |
+| production 테스트 데이터        | 교사·학생 데모 계정 2개, 모집글 ID 1, 승인된 지원 ID 1 보존                                                        |
+
+Vercel 최초 빌드는 기본 설치 방식에서 루트 개발 의존성 `@types/node`가 빠져 실패했습니다. 위 Install Command override를 설정하고 Node 22.x로 재배포하여 성공했습니다. Render 환경변수는 `NODE_ENV`, `DATABASE_URL`, `JWT_SECRET`, Vercel Production 변수는 `API_BASE_URL`만 설정했습니다.
+
+데모 계정은 `teacher-demo@example.com`, `student-demo@example.com`이며 비밀번호는 별도 비공개 관리합니다. 모집글은 “Campus Crew 첫 수업 — 함께 만드는 풀스택 프로젝트”입니다. 회원가입 API와 정상 UI/API 흐름으로 만들었으며 production seed, reset, 데이터 삭제는 실행하지 않았습니다. 이번 hosted 검증은 지원 후 승인 흐름으로 마쳤고 지원 취소는 실행하지 않았습니다. 브라우저가 보낸 API 요청 26개 모두 Vercel origin을 사용했습니다.
 
 ## 6. 흔한 문제 해결
 
@@ -264,7 +268,7 @@ npm run test:e2e
 
 학습 포인트: local/CI/production 분리, DB/API/Web의 연결, secret 외부 주입, migrate dev와 deploy의 차이, platform PORT, reverse proxy, HTTPS 쿠키, CI green → deploy → browser verify입니다. 다음 30차시는 **production incident 재현 → 원인 확인 → fix 브랜치/PR → CI green → migration 필요 여부 확인 → redeploy → 같은 smoke → v1.0**으로 이어갑니다. 의도적인 장애 실습은 사용자 데이터가 없는 별도 데모 환경에서 진행합니다.
 
-## 8. 이번 작업의 로컬 검증 결과
+## 8. 29차시 당시의 로컬 검증 기록
 
 - Node 22.17.1 / npm 10.9.2, 원본 lockfile 의존성 유지. `npm ci --include=dev` 성공.
 - `format:check`, `lint`, API 63개 + web 80개 테스트 통과. web에는 실제 Next config를 실행하는 배포 설정 회귀 테스트 9개가 포함됩니다.
@@ -274,13 +278,21 @@ npm run test:e2e
 - 기존 Playwright 로그인 → 목록 → 상세 smoke 통과.
 - 추가 실제 Chromium production 모드 검증: 홈, same-origin API 회원가입, UI 로그인, Set-Cookie의 Secure/HttpOnly/Lax와 Domain 미지정, 브라우저 저장, JS 접근 불가, 새로고침/me 200, UI 글 생성·검색 목록·상세, 두 번째 계정 지원/PENDING DB 조회/취소, 로그아웃/me 401 통과. 모든 브라우저 요청은 Next origin을 유지했습니다.
 - 추가 smoke가 만든 로컬 계정/모집글/지원 행은 해당 ID만 정리하고 테스트 서버를 종료했습니다. 로컬 `_test` DB와 기존 E2E fixture는 재검증용으로 남았습니다.
-- **위 결과는 loopback HTTP의 production 모드 검증입니다. 실제 Neon migration, Render/Vercel 배포, HTTPS cookie 및 hosted smoke는 아직 미실행입니다.** 독립 코드 리뷰에서도 이 구분을 확인했습니다.
+- **이 절은 29차시 당시의 loopback HTTP 검증 기록입니다.** 이후 2026-09-24 실제 hosted 배포와 HTTPS 검증을 완료했으며 최신 결과는 위 배포 기록표를 참고하세요.
 
 변경 파일: `package.json`, `package-lock.json`, `apps/api/package.json`, `apps/web/package.json`, `apps/api/src/main.ts`, `apps/web/next.config.ts`, `apps/web/test/deployment-config.test.mjs`, `.env.example`, `.env.test.example`, `apps/api/.env.example`, `apps/web/.env.example`, `.github/workflows/ci.yml`, `README.md`, 이 문서, 29차시 계획 문서. migration/seed와 기존 기능 소스는 변경하지 않았습니다.
 
 의존성 참고: 이번 설치에서 `npm audit --omit=dev`는 기존 Prisma CLI 전이 의존성(`deepmerge-ts`, `mysql2` 및 이를 포함하는 Prisma/config)에 high 4개를 보고했습니다. 이 앱의 DB adapter는 PostgreSQL이며 해당 CLI 의존성을 통한 실제 노출 가능성은 별도 평가가 필요합니다. npm이 제안한 자동 fix는 Prisma 6으로 변경하는 major 작업이므로 실행하지 않았습니다. 이번 차시의 프레임워크 변경 금지 범위를 유지하고 후속 의존성 검토 대상으로 기록합니다.
 
-## 공식 근거 (2026-09-23 확인)
+## 9. 2026-09-24 최종 검증
+
+- format:check, lint, API 63개, web 83개 테스트, API/Web build, 로컬 Playwright 1개 통과.
+- 로컬 검증은 별도 `campus_crew_deploy_20260924_test` DB를 사용했습니다. API 테스트 첫 통합 실행의 서버 시작 실패 후 단독 재실행에서 4개 suite/63개 모두 통과했습니다.
+- 실제 Vercel HTTPS에서 UI 로그인·모집글 작성·목록·상세·학생 지원, API 승인 후 UI의 `승인됨 (APPROVED)` 표시, 로그아웃을 확인했습니다.
+- 스크린샷과 smoke 기록에는 쿠키 값·JWT·연결 문자열·비밀번호를 포함하지 않았습니다.
+- Render Free는 유휴 후 첫 요청이 지연될 수 있으므로 수업 전에 Web/API를 열어 정상 응답을 확인하세요. 남은 필수 로그인 승인이나 배포 설정은 없습니다.
+
+## 공식 근거 (2026-09-23~24 확인)
 
 - [Neon: Prisma pooled migration 지원](https://neon.com/blog/better-postgres-with-prisma-experience), [현재 Prisma 연결 가이드](https://neon.com/docs/guides/prisma) — 두 자료의 pooled/direct 안내 차이를 위에 명시했습니다.
 - [Render Web Services: host와 PORT](https://render.com/docs/web-services), [배포 단계 및 paid pre-deploy](https://render.com/docs/deploys), [Node 버전](https://render.com/docs/node-version).
