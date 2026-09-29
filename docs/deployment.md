@@ -175,7 +175,7 @@ Render API origin을 확보한 뒤에만 다음 단계로 이동합니다. API�
 
 **Vercel production URL**을 사용하고 DevTools → Network / Application → Cookies를 엽니다. 쿠키 **값**을 복사하거나 전체 HAR/trace를 공유하지 말고 이름·옵션·상태 코드만 기록합니다. 기존 session-28 Playwright는 로컬 서버와 테스트 DB를 기동하므로 hosted 검증을 대신하지 않습니다.
 
-현재 저장소에는 회원가입 **API만** 있고 `/signup` 페이지는 없습니다. Postman에서 **Vercel origin의** `POST /api/auth/signup`으로 계정 A/B를 각각 만듭니다. Body → raw → JSON에 `name`(예: `29차시 smoke A`, 2~~20자), 고유 `email`, 별도 데모 `password`(8~~50자, UTF-8 최대 72바이트)를 보냅니다. 실제 비밀번호는 개인 로컬 secret 변수로 입력하고 컬렉션에 저장하거나 공유하지 않습니다. 응답 201을 확인한 뒤 `/login` 화면에서 로그인합니다. API origin을 Render로 바꾸지 않습니다.
+21차시 화면 보완 이후에는 **Vercel의 `/signup` 화면**에서 이름·이메일·비밀번호·비밀번호 확인을 입력해 계정 A/B를 만듭니다. 가입 201과 완료 안내를 확인한 뒤 `/login`으로 이동해 로그인합니다. 가입 자체는 JWT나 Cookie를 만들지 않습니다. Postman의 `POST /api/auth/signup`도 계속 사용할 수 있습니다. 비밀번호와 Cookie 값은 로그·강의노트에 기록하지 않으며 API origin을 Render로 바꾸지 않습니다.
 
 | 순서 | 행동                                                               | 기대 결과                                                                   |
 | ---- | ------------------------------------------------------------------ | --------------------------------------------------------------------------- |

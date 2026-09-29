@@ -383,6 +383,7 @@ npm --version
 `POST /api/auth/signup`은 DTO 입력 검증 후 bcryptjs cost 10으로 비밀번호를 hash하고 User를 생성합니다. 응답에는 id/email/name/createdAt만 포함하며 중복 이메일은 409입니다.
 
 - [21차시 수업 노트와 실제 검증 기록](docs/session-21-signup.md)
+- [21차시 보완: 회원가입 화면과 API 연결](docs/session-21-signup-ui.md) — 원래 커밋 보존, `lesson/session-21-signup-complete` 체크포인트 제공
 - [21차시 Postman 컬렉션](docs/postman/session-21-signup.postman_collection.json)
 - 로그인과 JWT는 다음 22차시에서 구현합니다.
 
