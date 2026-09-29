@@ -22,14 +22,9 @@ export function Header() {
           >
             로그인
           </button>
-          <button
-            type="button"
-            disabled
-            title="인증 차시에서 구현 예정"
-            className="text-neutral-500"
-          >
+          <Link href="/signup" className="text-neutral-500">
             회원가입
-          </button>
+          </Link>
         </nav>
       </Container>
     </header>
